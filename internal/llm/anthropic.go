@@ -25,17 +25,31 @@ func (p *anthropicProvider) SupportsVision() bool { return true }
 func (p *anthropicProvider) FormatRequest(messages []Message, opts CallOpts) (*http.Request, error) {
 	// Anthropic requires system message separate from messages
 	var systemPrompt string
-	var apiMessages []map[string]string
+	var apiMessages []any
 
 	for _, m := range messages {
 		if m.Role == "system" {
 			systemPrompt = m.Content
 			continue
 		}
-		apiMessages = append(apiMessages, map[string]string{
-			"role":    m.Role,
-			"content": m.Content,
-		})
+		if m.ImageBase64 != "" {
+			apiMessages = append(apiMessages, map[string]any{
+				"role": m.Role,
+				"content": []map[string]any{
+					{"type": "image", "source": map[string]string{
+						"type":       "base64",
+						"media_type": m.ImageMime,
+						"data":       m.ImageBase64,
+					}},
+					{"type": "text", "text": m.Content},
+				},
+			})
+		} else {
+			apiMessages = append(apiMessages, map[string]string{
+				"role":    m.Role,
+				"content": m.Content,
+			})
+		}
 	}
 
 	maxTokens := opts.MaxTokens

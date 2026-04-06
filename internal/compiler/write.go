@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -113,6 +114,13 @@ func writeOneArticle(
 		articleContent = buildFrontmatter(concept) + "\n\n" + articleContent
 	}
 
+	// Normalize confidence values to enum (high/medium/low)
+	articleContent = normalizeConfidence(articleContent)
+
+	// Note: wikilinks are kept even if targets don't exist yet.
+	// Future compiles will create the missing articles, and the links
+	// will resolve naturally. Broken links are surfaced by `sage-wiki lint`.
+
 	// Write article file
 	articleDir := filepath.Join(projectDir, outputDir, "concepts")
 	os.MkdirAll(articleDir, 0755)
@@ -159,6 +167,9 @@ func writeOneArticle(
 			log.Warn("failed to create cites relation", "concept", concept.Name, "source", src, "error", err)
 		}
 	}
+
+	// Extract typed relations from article text
+	extractRelations(concept.Name, articleContent, ontStore)
 
 	// Index in FTS5
 	if err := memStore.Add(memory.Entry{
@@ -207,13 +218,27 @@ func buildArticlePrompt(concept ExtractedConcept, existing string, related []str
 
 	b.WriteString(`
 Write the article with:
-1. YAML frontmatter (concept, aliases, sources, confidence)
-2. ## Definition — clear, precise
+1. YAML frontmatter with these exact fields:
+   - concept: (the concept ID)
+   - aliases: (alternative names)
+   - sources: (source file paths)
+   - confidence: MUST be exactly one of: high, medium, low (no numbers, no percentages)
+2. ## Definition — clear, precise definition
 3. ## How it works — technical explanation
-4. ## Variants — known variants if any
-5. ## See also — [[wikilinks]] to related concepts
+4. ## Variants — known variants or implementations if any
+5. ## Trade-offs — key trade-offs or limitations
+6. ## See also — [[wikilinks]] to related concepts
 
-Use [[concept-name]] wikilinks for cross-references.`)
+IMPORTANT rules for wikilinks:
+- Use [[concept-name]] format (lowercase-hyphenated)
+- Link to any concept that deserves a standalone article — even if the article doesn't exist yet (it will be created in future compiles)
+- Do NOT link to generic terms, math notation ($O(n)$), or register names ($a0)
+- Each link should be a meaningful technical concept, not filler
+
+For the concept's relationship to other concepts, indicate the relationship type in your text:
+- "X implements Y" / "X extends Y" / "X optimizes Y"
+- "X contradicts Y" / "X is a prerequisite for Y"
+This helps build the knowledge graph.`)
 
 	return b.String()
 }
@@ -259,6 +284,105 @@ func findRelatedConcepts(concept ExtractedConcept) []string {
 	return nil
 }
 
+// extractRelations parses article text for relationship patterns and creates ontology edges.
+// Looks for patterns like "X implements Y", "X extends Y", etc. near [[wikilinks]].
+func extractRelations(conceptID string, content string, ontStore *ontology.Store) {
+	linkRe := regexp.MustCompile(`\[\[([^\]]+)\]\]`)
+	links := linkRe.FindAllStringSubmatch(content, -1)
+
+	// Collect unique linked concepts
+	linkedConcepts := map[string]bool{}
+	for _, m := range links {
+		target := m[1]
+		if target != conceptID {
+			linkedConcepts[target] = true
+		}
+	}
+
+	contentLower := strings.ToLower(content)
+
+	// Pattern matching for relation types
+	relationPatterns := []struct {
+		keywords []string
+		relation string
+	}{
+		{[]string{"implements", "implementation of", "is an implementation"}, ontology.RelImplements},
+		{[]string{"extends", "extension of", "builds on", "builds upon"}, ontology.RelExtends},
+		{[]string{"optimizes", "optimization of", "improves upon", "faster than"}, ontology.RelOptimizes},
+		{[]string{"contradicts", "conflicts with", "disagrees with", "challenges"}, ontology.RelContradicts},
+		{[]string{"prerequisite", "requires knowledge of", "depends on", "built on top of"}, ontology.RelPrerequisiteOf},
+		{[]string{"trade-off", "tradeoff", "trades off", "at the cost of"}, ontology.RelTradesOff},
+	}
+
+	for target := range linkedConcepts {
+		targetLower := strings.ToLower(target)
+		for _, rp := range relationPatterns {
+			for _, keyword := range rp.keywords {
+				// Look for the keyword near the concept mention
+				if strings.Contains(contentLower, keyword) && strings.Contains(contentLower, targetLower) {
+					ontStore.AddRelation(ontology.Relation{
+						ID:       conceptID + "-" + rp.relation + "-" + target,
+						SourceID: conceptID,
+						TargetID: target,
+						Relation: rp.relation,
+					})
+					break // one relation type per target is enough
+				}
+			}
+		}
+	}
+}
+
 func sanitizeID(s string) string {
 	return strings.NewReplacer("/", "-", "\\", "-", ".", "-", " ", "-").Replace(s)
+}
+
+// normalizeConfidence replaces non-standard confidence values in frontmatter
+// with the enum (high/medium/low).
+func normalizeConfidence(content string) string {
+	// Find confidence line in frontmatter
+	lines := strings.Split(content, "\n")
+	for i, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "confidence:") {
+			value := strings.TrimSpace(strings.TrimPrefix(trimmed, "confidence:"))
+			normalized := mapConfidence(value)
+			lines[i] = "confidence: " + normalized
+			break
+		}
+	}
+	return strings.Join(lines, "\n")
+}
+
+func mapConfidence(value string) string {
+	v := strings.ToLower(strings.TrimSpace(value))
+	switch {
+	case v == "high" || v == "5" || v == "5/5" || v == "100%" || v == "certain" || v == "very high":
+		return "high"
+	case v == "medium" || v == "3" || v == "4" || v == "3/5" || v == "4/5" || v == "moderate" || v == "60%" || v == "70%" || v == "80%":
+		return "medium"
+	case v == "low" || v == "1" || v == "2" || v == "1/5" || v == "2/5" || v == "uncertain" || v == "speculative":
+		return "low"
+	default:
+		return "medium" // default to medium for unknown values
+	}
+}
+
+// validateWikilinks removes [[links]] that point to non-existent concept articles.
+func validateWikilinks(projectDir, outputDir, content string) string {
+	conceptsDir := filepath.Join(projectDir, outputDir, "concepts")
+
+	re := regexp.MustCompile(`\[\[([^\]]+)\]\]`)
+	return re.ReplaceAllStringFunc(content, func(match string) string {
+		target := match[2 : len(match)-2] // strip [[ and ]]
+
+		// Check if article exists
+		articlePath := filepath.Join(conceptsDir, target+".md")
+		if _, err := os.Stat(articlePath); err == nil {
+			return match // valid link, keep it
+		}
+
+		// Link is broken — return just the text without brackets
+		return target
+	})
 }

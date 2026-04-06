@@ -29,14 +29,30 @@ func Extract(path string, sourceType string) (*SourceContent, error) {
 	ext := strings.ToLower(filepath.Ext(path))
 
 	switch {
-	case ext == ".md" || ext == ".txt":
+	case ext == ".md":
 		return extractMarkdown(path, sourceType)
 	case ext == ".pdf":
 		return extractPDF(path)
+	case ext == ".docx":
+		return extractDocx(path)
+	case ext == ".xlsx":
+		return extractXlsx(path)
+	case ext == ".pptx":
+		return extractPptx(path)
+	case ext == ".csv":
+		return extractCSV(path)
+	case ext == ".epub":
+		return extractEpub(path)
+	case ext == ".eml" || ext == ".msg":
+		return extractEmail(path)
+	case isImageFile(ext):
+		return extractImage(path)
+	case ext == ".txt" || ext == ".log" || ext == ".vtt" || ext == ".srt":
+		return extractPlainText(path, sourceType)
 	case isCodeFile(ext):
 		return extractCode(path)
 	default:
-		return extractMarkdown(path, sourceType) // treat unknown as text
+		return extractPlainText(path, sourceType) // treat unknown as text
 	}
 }
 
@@ -89,12 +105,19 @@ func extractMarkdown(path string, sourceType string) (*SourceContent, error) {
 	}, nil
 }
 
-func extractPDF(path string) (*SourceContent, error) {
-	// Basic PDF text extraction
-	// In M2 we provide a placeholder — full ledongthuc/pdf integration
-	// will be added when the dependency is wired. For now, return an error
-	// that guides the user.
-	return nil, fmt.Errorf("PDF extraction not yet implemented for %s — add .md sources first", filepath.Base(path))
+func extractPlainText(path string, sourceType string) (*SourceContent, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("extract text: %w", err)
+	}
+	if sourceType == "" || sourceType == "auto" {
+		sourceType = "article"
+	}
+	return &SourceContent{
+		Path: path,
+		Type: sourceType,
+		Text: string(data),
+	}, nil
 }
 
 func extractCode(path string) (*SourceContent, error) {
@@ -107,6 +130,35 @@ func extractCode(path string) (*SourceContent, error) {
 		Path: path,
 		Type: "code",
 		Text: string(data),
+	}, nil
+}
+
+func isImageFile(ext string) bool {
+	imageExts := map[string]bool{
+		".png": true, ".jpg": true, ".jpeg": true, ".gif": true,
+		".webp": true, ".svg": true, ".bmp": true,
+	}
+	return imageExts[ext]
+}
+
+// IsImageSource returns true if the content was extracted from an image file.
+// Callers should use vision-capable LLMs for summarization.
+func IsImageSource(sc *SourceContent) bool {
+	return sc.Type == "image"
+}
+
+// extractImage creates a SourceContent that marks the file as requiring vision.
+// The actual image bytes are read at summarization time and sent as base64.
+func extractImage(path string) (*SourceContent, error) {
+	info, err := os.Stat(path)
+	if err != nil {
+		return nil, fmt.Errorf("extract image: %w", err)
+	}
+
+	return &SourceContent{
+		Path: path,
+		Type: "image",
+		Text: fmt.Sprintf("[Image: %s, %d bytes]", filepath.Base(path), info.Size()),
 	}, nil
 }
 
@@ -213,6 +265,20 @@ func DetectSourceType(path string) string {
 	case ".pdf":
 		return "paper"
 	case ".md", ".txt":
+		return "article"
+	case ".docx", ".doc":
+		return "article"
+	case ".xlsx", ".xls", ".csv":
+		return "dataset"
+	case ".pptx", ".ppt":
+		return "article"
+	case ".epub":
+		return "article"
+	case ".eml", ".msg", ".mbox":
+		return "article"
+	case ".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".bmp":
+		return "image"
+	case ".log", ".vtt", ".srt":
 		return "article"
 	default:
 		if isCodeFile(ext) {

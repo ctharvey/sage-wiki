@@ -16,8 +16,10 @@ import (
 
 // Message represents a chat message.
 type Message struct {
-	Role    string `json:"role"` // system, user, assistant
-	Content string `json:"content"`
+	Role        string `json:"role"` // system, user, assistant
+	Content     string `json:"content"`
+	ImageBase64 string `json:"-"` // base64 image data (vision messages only)
+	ImageMime   string `json:"-"` // e.g. "image/png"
 }
 
 // CallOpts configures an LLM call.
@@ -105,6 +107,19 @@ func (c *Client) ChatCompletion(messages []Message, opts CallOpts) (*Response, e
 // SupportsVision returns whether the provider supports image inputs.
 func (c *Client) SupportsVision() bool {
 	return c.provider.SupportsVision()
+}
+
+// ChatCompletionWithImage sends a chat completion with an inline base64 image.
+// The image is embedded in a Message with ImageBase64/ImageMime fields set.
+// Each provider adapter handles the multimodal format in FormatRequest.
+func (c *Client) ChatCompletionWithImage(messages []Message, prompt string, imageBase64 string, mimeType string, opts CallOpts) (*Response, error) {
+	visionMsg := Message{
+		Role:        "user",
+		Content:     prompt,
+		ImageBase64: imageBase64,
+		ImageMime:   mimeType,
+	}
+	return c.ChatCompletion(append(messages, visionMsg), opts)
 }
 
 // ProviderName returns the provider name.

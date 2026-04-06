@@ -1,6 +1,7 @@
 package compiler
 
 import (
+	"encoding/base64"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -86,6 +87,19 @@ func summarizeOne(
 		return result
 	}
 
+	var summaryText string
+
+	// Handle image sources — use vision if available
+	if extract.IsImageSource(content) {
+		text, err := summarizeImage(projectDir, info, client, model, maxTokens)
+		if err != nil {
+			result.Error = err
+			return result
+		}
+		summaryText = text
+		return writeSummaryFile(projectDir, outputDir, info, content, summaryText, result)
+	}
+
 	// Chunk if needed
 	extract.ChunkIfNeeded(content, maxTokens*2) // Allow 2x for input
 	result.ChunkCount = content.ChunkCount
@@ -95,8 +109,6 @@ func summarizeOne(
 	if content.Type == "paper" {
 		templateName = "summarize_paper"
 	}
-
-	var summaryText string
 
 	if content.ChunkCount <= 1 {
 		// Single-chunk summarization
@@ -162,7 +174,10 @@ func summarizeOne(
 		summaryText = resp.Content
 	}
 
-	// Write summary file
+	return writeSummaryFile(projectDir, outputDir, info, content, summaryText, result)
+}
+
+func writeSummaryFile(projectDir, outputDir string, info SourceInfo, content *extract.SourceContent, summaryText string, result SummaryResult) SummaryResult {
 	summaryDir := filepath.Join(projectDir, outputDir, "summaries")
 	os.MkdirAll(summaryDir, 0755)
 
@@ -170,7 +185,6 @@ func summarizeOne(
 	summaryPath := filepath.Join(outputDir, "summaries", baseName+".md")
 	absOutputPath := filepath.Join(projectDir, summaryPath)
 
-	// Add frontmatter
 	frontmatter := fmt.Sprintf(`---
 source: %s
 source_type: %s
@@ -188,4 +202,48 @@ chunk_count: %d
 	result.SummaryPath = summaryPath
 	result.Summary = summaryText
 	return result
+}
+
+func summarizeImage(projectDir string, info SourceInfo, client *llm.Client, model string, maxTokens int) (string, error) {
+	if !client.SupportsVision() {
+		return "", fmt.Errorf("skipping image %s — LLM provider does not support vision", info.Path)
+	}
+
+	absPath := filepath.Join(projectDir, info.Path)
+	imgData, err := os.ReadFile(absPath)
+	if err != nil {
+		return "", fmt.Errorf("read image: %w", err)
+	}
+
+	mimeType := detectImageMime(info.Path)
+	b64 := base64.StdEncoding.EncodeToString(imgData)
+
+	prompt := fmt.Sprintf("Describe this image from a knowledge base.\nSource: %s\n\nProvide:\n1. A brief caption\n2. What the image depicts (diagram, chart, photo, screenshot, etc.)\n3. Key information conveyed\n4. Any text visible in the image\n5. Concepts this relates to", info.Path)
+
+	resp, err := client.ChatCompletionWithImage([]llm.Message{
+		{Role: "system", Content: "You are a research assistant describing images for a personal knowledge wiki."},
+	}, prompt, b64, mimeType, llm.CallOpts{Model: model, MaxTokens: maxTokens})
+	if err != nil {
+		return "", fmt.Errorf("vision LLM: %w", err)
+	}
+
+	return resp.Content, nil
+}
+
+func detectImageMime(path string) string {
+	ext := strings.ToLower(filepath.Ext(path))
+	switch ext {
+	case ".png":
+		return "image/png"
+	case ".jpg", ".jpeg":
+		return "image/jpeg"
+	case ".gif":
+		return "image/gif"
+	case ".webp":
+		return "image/webp"
+	case ".svg":
+		return "image/svg+xml"
+	default:
+		return "image/png"
+	}
 }

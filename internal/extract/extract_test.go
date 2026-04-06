@@ -3,6 +3,7 @@ package extract
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -110,6 +111,58 @@ func TestChunkByParagraphs(t *testing.T) {
 	}
 }
 
+func TestExtractCSV(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "data.csv")
+	os.WriteFile(path, []byte("name,age,city\nAlice,30,NYC\nBob,25,LA\n"), 0644)
+
+	result, err := Extract(path, "dataset")
+	if err != nil {
+		t.Fatalf("Extract CSV: %v", err)
+	}
+	if result.Type != "dataset" {
+		t.Errorf("expected dataset, got %s", result.Type)
+	}
+	if !strings.Contains(result.Text, "Alice") {
+		t.Error("expected CSV content to contain 'Alice'")
+	}
+	if !strings.Contains(result.Text, "Headers:") {
+		t.Error("expected CSV to have headers line")
+	}
+}
+
+func TestExtractPlainText(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "notes.log")
+	os.WriteFile(path, []byte("2026-04-06 INFO: System started\n2026-04-06 ERROR: Something failed\n"), 0644)
+
+	result, err := Extract(path, "")
+	if err != nil {
+		t.Fatalf("Extract log: %v", err)
+	}
+	if !strings.Contains(result.Text, "System started") {
+		t.Error("expected log content")
+	}
+}
+
+func TestExtractEmail(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "test.eml")
+	eml := "From: alice@example.com\r\nTo: bob@example.com\r\nSubject: Test Email\r\nDate: Mon, 06 Apr 2026 10:00:00 +0000\r\n\r\nHello Bob,\r\nThis is a test email.\r\n"
+	os.WriteFile(path, []byte(eml), 0644)
+
+	result, err := Extract(path, "")
+	if err != nil {
+		t.Fatalf("Extract email: %v", err)
+	}
+	if !strings.Contains(result.Text, "Subject: Test Email") {
+		t.Error("expected email subject")
+	}
+	if !strings.Contains(result.Text, "Hello Bob") {
+		t.Error("expected email body")
+	}
+}
+
 func TestDetectSourceType(t *testing.T) {
 	tests := []struct {
 		path     string
@@ -120,7 +173,14 @@ func TestDetectSourceType(t *testing.T) {
 		{"notes.txt", "article"},
 		{"main.go", "code"},
 		{"script.py", "code"},
-		{"data.csv", "article"},
+		{"data.csv", "dataset"},
+		{"report.docx", "article"},
+		{"slides.pptx", "article"},
+		{"data.xlsx", "dataset"},
+		{"book.epub", "article"},
+		{"mail.eml", "article"},
+		{"output.log", "article"},
+		{"transcript.vtt", "article"},
 	}
 	for _, tt := range tests {
 		got := DetectSourceType(tt.path)

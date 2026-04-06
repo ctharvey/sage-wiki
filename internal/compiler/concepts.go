@@ -93,6 +93,13 @@ For each concept, provide:
 - sources: which source file paths mention this concept
 - type: one of "concept", "technique", or "claim"
 
+IMPORTANT filtering rules:
+- Only extract concepts that would warrant a standalone encyclopedia article
+- Do NOT extract: math notation ($O(n)$, $x^2$), register names ($a0, $t1),
+  single letters, numbers, file paths, or code syntax
+- Do NOT extract overly generic terms (e.g., "method", "system", "data")
+- Minimum: concept name should be at least 2 words or a recognized technical term
+
 Merge with existing concepts when you detect aliases or synonyms.
 Output ONLY a JSON array of objects. No markdown, no explanation.`,
 			strings.Join(dedup, ", "),
@@ -118,11 +125,51 @@ Output ONLY a JSON array of objects. No markdown, no explanation.`,
 		log.Info("batch concepts extracted", "batch", i/conceptBatchSize+1, "count", len(concepts))
 	}
 
+	// Filter noise
+	allConcepts = filterNoisyConcepts(allConcepts)
+
 	// Deduplicate across batches
 	allConcepts = deduplicateConcepts(allConcepts)
 
 	log.Info("concepts extracted", "total", len(allConcepts))
 	return allConcepts, nil
+}
+
+// filterNoisyConcepts removes concepts that are likely noise (LaTeX, registers, etc.).
+func filterNoisyConcepts(concepts []ExtractedConcept) []ExtractedConcept {
+	var filtered []ExtractedConcept
+	for _, c := range concepts {
+		name := c.Name
+		// Skip very short names (likely abbreviations or noise)
+		if len(name) < 2 {
+			continue
+		}
+		// Skip names that look like math notation
+		if strings.Contains(name, "$") || strings.Contains(name, "\\") {
+			continue
+		}
+		// Skip names that look like register names ($a0, $t1)
+		if strings.HasPrefix(name, "$") {
+			continue
+		}
+		// Skip names that are just numbers
+		isAllDigits := true
+		for _, r := range name {
+			if r < '0' || r > '9' {
+				isAllDigits = false
+				break
+			}
+		}
+		if isAllDigits {
+			continue
+		}
+		// Skip names that look like file paths
+		if strings.Contains(name, "/") || strings.Contains(name, ".md") {
+			continue
+		}
+		filtered = append(filtered, c)
+	}
+	return filtered
 }
 
 // deduplicateConcepts merges concepts with the same name across batches.

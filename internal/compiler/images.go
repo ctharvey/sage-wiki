@@ -4,19 +4,18 @@ import (
 	"github.com/xoai/sage-wiki/internal/log"
 )
 
-// ExtractImages runs Pass 4: extract and caption images from sources.
-// Currently a placeholder — PDF image extraction will be implemented
-// when ledongthuc/pdf is fully integrated. For now, this pass is a no-op.
+// ExtractImages runs Pass 4: image handling.
+// Images are now processed inline during Pass 1 (summarize) via vision LLM.
+// This pass logs a summary of image sources found.
 func ExtractImages(projectDir string, outputDir string, sources []SourceInfo) {
-	// Count sources that might have images
-	pdfCount := 0
+	imageCount := 0
 	for _, s := range sources {
-		if s.Type == "paper" {
-			pdfCount++
+		if s.Type == "image" {
+			imageCount++
 		}
 	}
 
-	if pdfCount > 0 {
-		log.Info("Pass 4: image extraction skipped (PDF support pending)", "pdf_sources", pdfCount)
+	if imageCount > 0 {
+		log.Info("Pass 4: image sources processed via vision in Pass 1", "image_sources", imageCount)
 	}
 }

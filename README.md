@@ -19,6 +19,25 @@ https://github.com/user-attachments/assets/c35ee202-e9df-4ccd-b520-8f057163ff26
 go install github.com/xoai/sage-wiki/cmd/sage-wiki@latest
 ```
 
+## Supported Source Formats
+
+| Format | Extensions | What gets extracted |
+|--------|-----------|-------------------|
+| Markdown | `.md` | Body text with frontmatter parsed separately |
+| PDF | `.pdf` | Full text via pure-Go extraction |
+| Word | `.docx` | Document text from XML |
+| Excel | `.xlsx` | Cell values and sheet data |
+| PowerPoint | `.pptx` | Slide text content |
+| CSV | `.csv` | Headers + rows (up to 1000 rows) |
+| EPUB | `.epub` | Chapter text from XHTML |
+| Email | `.eml` | Headers (from/to/subject/date) + body |
+| Plain text | `.txt`, `.log` | Raw content |
+| Transcripts | `.vtt`, `.srt` | Raw content |
+| Images | `.png`, `.jpg`, `.gif`, `.webp`, `.svg` | Description via vision LLM (caption, content, visible text) |
+| Code | `.go`, `.py`, `.js`, `.ts`, `.rs`, etc. | Source code |
+
+Just drop files into your source folder — sage-wiki detects the format automatically. Images require a vision-capable LLM (Gemini, Claude, GPT-4o).
+
 ## Quickstart
 
 ![Compiler Pipeline](sage-wiki-compiler-pipeline.png)

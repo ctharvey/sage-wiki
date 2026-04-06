@@ -38,12 +38,27 @@ func (p *geminiProvider) FormatRequest(messages []Message, opts CallOpts) (*http
 			role = "model"
 		}
 
-		contents = append(contents, map[string]any{
-			"role": role,
-			"parts": []map[string]string{
-				{"text": m.Content},
-			},
-		})
+		if m.ImageBase64 != "" {
+			contents = append(contents, map[string]any{
+				"role": role,
+				"parts": []any{
+					map[string]any{
+						"inlineData": map[string]string{
+							"mimeType": m.ImageMime,
+							"data":     m.ImageBase64,
+						},
+					},
+					map[string]string{"text": m.Content},
+				},
+			})
+		} else {
+			contents = append(contents, map[string]any{
+				"role": role,
+				"parts": []map[string]string{
+					{"text": m.Content},
+				},
+			})
+		}
 	}
 
 	body := map[string]any{

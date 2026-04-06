@@ -23,9 +23,29 @@ func (p *openaiProvider) Name() string        { return "openai" }
 func (p *openaiProvider) SupportsVision() bool { return true }
 
 func (p *openaiProvider) FormatRequest(messages []Message, opts CallOpts) (*http.Request, error) {
+	// Convert messages, handling vision content
+	var apiMessages []any
+	for _, m := range messages {
+		if m.ImageBase64 != "" {
+			apiMessages = append(apiMessages, map[string]any{
+				"role": m.Role,
+				"content": []map[string]any{
+					{"type": "text", "text": m.Content},
+					{"type": "image_url", "image_url": map[string]string{
+						"url": "data:" + m.ImageMime + ";base64," + m.ImageBase64,
+					}},
+				},
+			})
+		} else {
+			apiMessages = append(apiMessages, map[string]string{
+				"role": m.Role, "content": m.Content,
+			})
+		}
+	}
+
 	body := map[string]any{
 		"model":    opts.Model,
-		"messages": messages,
+		"messages": apiMessages,
 	}
 	if opts.MaxTokens > 0 {
 		body["max_tokens"] = opts.MaxTokens
