@@ -118,6 +118,7 @@ func init() {
 	// Init flags
 	initCmd.Flags().Bool("vault", false, "Initialize as vault overlay on existing Obsidian vault")
 	initCmd.Flags().Bool("prompts", false, "Scaffold prompt templates for customization")
+	initCmd.Flags().String("model", "gemini-2.5-flash", "Default LLM model for all tasks (e.g. gemini-2.5-flash, gemini-3.1-flash-lite)")
 
 	// Compile flags
 	compileCmd.Flags().Bool("watch", false, "Watch for changes and recompile")
@@ -148,6 +149,7 @@ func init() {
 
 func runInit(cmd *cobra.Command, args []string) error {
 	vaultMode, _ := cmd.Flags().GetBool("vault")
+	model, _ := cmd.Flags().GetString("model")
 	dir, _ := filepath.Abs(projectDir)
 
 	// Derive project name from directory
@@ -188,11 +190,11 @@ func runInit(cmd *cobra.Command, args []string) error {
 		fmt.Printf("Ignored folders: %v\n", ignoreFolders)
 		fmt.Println("\nEdit config.yaml to adjust source/ignore folders.")
 
-		if err := wiki.InitVaultOverlay(dir, project, sourceFolders, ignoreFolders, "_wiki"); err != nil {
+		if err := wiki.InitVaultOverlay(dir, project, sourceFolders, ignoreFolders, "_wiki", model); err != nil {
 			return err
 		}
 	} else {
-		if err := wiki.InitGreenfield(dir, project); err != nil {
+		if err := wiki.InitGreenfield(dir, project, model); err != nil {
 			return err
 		}
 	}

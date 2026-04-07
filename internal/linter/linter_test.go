@@ -12,7 +12,7 @@ import (
 func setupLintProject(t *testing.T) (string, *LintContext) {
 	t.Helper()
 	dir := t.TempDir()
-	wiki.InitGreenfield(dir, "test")
+	wiki.InitGreenfield(dir, "test", "gemini-2.5-flash")
 
 	ctx := &LintContext{
 		ProjectDir: dir,

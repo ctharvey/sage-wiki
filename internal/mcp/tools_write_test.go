@@ -15,7 +15,7 @@ import (
 
 func TestWriteSummary(t *testing.T) {
 	dir := t.TempDir()
-	wiki.InitGreenfield(dir, "test")
+	wiki.InitGreenfield(dir, "test", "gemini-2.5-flash")
 
 	srv, err := NewServer(dir)
 	if err != nil {
@@ -58,7 +58,7 @@ func TestWriteSummary(t *testing.T) {
 
 func TestWriteArticle(t *testing.T) {
 	dir := t.TempDir()
-	wiki.InitGreenfield(dir, "test")
+	wiki.InitGreenfield(dir, "test", "gemini-2.5-flash")
 
 	srv, _ := NewServer(dir)
 	defer srv.Close()
@@ -98,7 +98,7 @@ func TestWriteArticle(t *testing.T) {
 
 func TestAddOntologyEntity(t *testing.T) {
 	dir := t.TempDir()
-	wiki.InitGreenfield(dir, "test")
+	wiki.InitGreenfield(dir, "test", "gemini-2.5-flash")
 
 	srv, _ := NewServer(dir)
 	defer srv.Close()
@@ -126,7 +126,7 @@ func TestAddOntologyEntity(t *testing.T) {
 
 func TestAddOntologyRelation(t *testing.T) {
 	dir := t.TempDir()
-	wiki.InitGreenfield(dir, "test")
+	wiki.InitGreenfield(dir, "test", "gemini-2.5-flash")
 
 	srv, _ := NewServer(dir)
 	defer srv.Close()
@@ -158,7 +158,7 @@ func TestAddOntologyRelation(t *testing.T) {
 
 func TestLearn(t *testing.T) {
 	dir := t.TempDir()
-	wiki.InitGreenfield(dir, "test")
+	wiki.InitGreenfield(dir, "test", "gemini-2.5-flash")
 
 	srv, _ := NewServer(dir)
 	defer srv.Close()
@@ -188,7 +188,7 @@ func TestLearn(t *testing.T) {
 
 func TestCommit(t *testing.T) {
 	dir := t.TempDir()
-	wiki.InitGreenfield(dir, "test")
+	wiki.InitGreenfield(dir, "test", "gemini-2.5-flash")
 
 	srv, _ := NewServer(dir)
 	defer srv.Close()
@@ -214,7 +214,7 @@ func TestCommit(t *testing.T) {
 
 func TestCompileDiff(t *testing.T) {
 	dir := t.TempDir()
-	wiki.InitGreenfield(dir, "test")
+	wiki.InitGreenfield(dir, "test", "gemini-2.5-flash")
 
 	srv, _ := NewServer(dir)
 	defer srv.Close()
@@ -238,7 +238,7 @@ func TestCompileDiff(t *testing.T) {
 
 func TestAddSourceWithPathTraversal(t *testing.T) {
 	dir := t.TempDir()
-	wiki.InitGreenfield(dir, "test")
+	wiki.InitGreenfield(dir, "test", "gemini-2.5-flash")
 
 	srv, _ := NewServer(dir)
 	defer srv.Close()

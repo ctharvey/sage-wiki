@@ -15,7 +15,7 @@ import (
 
 func TestCompileDryRun(t *testing.T) {
 	dir := t.TempDir()
-	wiki.InitGreenfield(dir, "test")
+	wiki.InitGreenfield(dir, "test", "gemini-2.5-flash")
 
 	// Add source files
 	os.WriteFile(filepath.Join(dir, "raw", "a.md"), []byte("# Test A\nContent A."), 0644)
@@ -36,7 +36,7 @@ func TestCompileDryRun(t *testing.T) {
 
 func TestCompileNothingToDo(t *testing.T) {
 	dir := t.TempDir()
-	wiki.InitGreenfield(dir, "test")
+	wiki.InitGreenfield(dir, "test", "gemini-2.5-flash")
 
 	result, err := Compile(dir, CompileOpts{})
 	if err != nil {
@@ -86,7 +86,7 @@ func TestCompileWithMockLLM(t *testing.T) {
 	defer server.Close()
 
 	dir := t.TempDir()
-	wiki.InitGreenfield(dir, "test")
+	wiki.InitGreenfield(dir, "test", "gemini-2.5-flash")
 
 	// Update config to use mock server
 	cfgContent := `
@@ -150,7 +150,7 @@ compiler:
 
 func TestCompileCheckpointResume(t *testing.T) {
 	dir := t.TempDir()
-	wiki.InitGreenfield(dir, "test")
+	wiki.InitGreenfield(dir, "test", "gemini-2.5-flash")
 
 	// Create a checkpoint with article2 already completed
 	statePath := filepath.Join(dir, ".sage", "compile-state.json")

@@ -13,7 +13,7 @@ import (
 func setupProject(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
-	if err := wiki.InitGreenfield(dir, "test"); err != nil {
+	if err := wiki.InitGreenfield(dir, "test", "gemini-2.5-flash"); err != nil {
 		t.Fatalf("init: %v", err)
 	}
 	return dir
@@ -110,6 +110,7 @@ func TestDiffRespectsIgnore(t *testing.T) {
 		[]string{"Clippings"},
 		[]string{"Personal"},
 		"_wiki",
+		"gemini-2.5-flash",
 	)
 
 	cfg, _ := config.Load(filepath.Join(dir, "config.yaml"))

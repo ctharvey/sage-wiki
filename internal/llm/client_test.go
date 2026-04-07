@@ -126,7 +126,7 @@ func TestGeminiFormat(t *testing.T) {
 				}},
 			},
 			"usageMetadata":  map[string]int{"totalTokenCount": 15},
-			"modelVersion": "gemini-2.0-flash",
+			"modelVersion": "gemini-2.5-flash",
 		})
 	}))
 	defer server.Close()
@@ -139,7 +139,7 @@ func TestGeminiFormat(t *testing.T) {
 	resp, err := client.ChatCompletion([]Message{
 		{Role: "system", Content: "System prompt"},
 		{Role: "user", Content: "Hello"},
-	}, CallOpts{Model: "gemini-2.0-flash"})
+	}, CallOpts{Model: "gemini-2.5-flash"})
 
 	if err != nil {
 		t.Fatalf("ChatCompletion: %v", err)

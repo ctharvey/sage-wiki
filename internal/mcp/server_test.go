@@ -18,7 +18,7 @@ func setupTestProject(t *testing.T) string {
 	dir := t.TempDir()
 
 	// Initialize a greenfield project
-	if err := wiki.InitGreenfield(dir, "test-project"); err != nil {
+	if err := wiki.InitGreenfield(dir, "test-project", "gemini-2.5-flash"); err != nil {
 		t.Fatalf("init: %v", err)
 	}
 

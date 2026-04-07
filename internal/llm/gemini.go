@@ -85,7 +85,7 @@ func (p *geminiProvider) formatBody(messages []Message, opts CallOpts) (map[stri
 
 	model := opts.Model
 	if model == "" {
-		model = "gemini-2.0-flash"
+		model = "gemini-2.5-flash"
 	}
 
 	return body, model

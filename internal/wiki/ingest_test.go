@@ -12,7 +12,7 @@ import (
 
 func TestIngestLocalFile(t *testing.T) {
 	dir := t.TempDir()
-	InitGreenfield(dir, "test")
+	InitGreenfield(dir, "test", "gemini-2.5-flash")
 
 	// Create a source file to ingest
 	srcFile := filepath.Join(t.TempDir(), "article.md")
@@ -42,7 +42,7 @@ func TestIngestLocalFile(t *testing.T) {
 
 func TestIngestURL(t *testing.T) {
 	dir := t.TempDir()
-	InitGreenfield(dir, "test")
+	InitGreenfield(dir, "test", "gemini-2.5-flash")
 
 	// Disable SSRF check for test (mock server is on localhost)
 	SkipSSRFCheck = true

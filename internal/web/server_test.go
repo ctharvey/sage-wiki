@@ -17,7 +17,7 @@ import (
 func setupTestProject(t *testing.T) *WebServer {
 	t.Helper()
 	dir := t.TempDir()
-	wiki.InitGreenfield(dir, "test")
+	wiki.InitGreenfield(dir, "test", "gemini-2.5-flash")
 
 	// Create some test articles
 	conceptsDir := filepath.Join(dir, "wiki", "concepts")

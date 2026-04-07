@@ -12,7 +12,7 @@ import (
 )
 
 // InitGreenfield creates a new sage-wiki project from scratch.
-func InitGreenfield(dir string, project string) error {
+func InitGreenfield(dir string, project string, model string) error {
 	// Create directories
 	dirs := []string{
 		filepath.Join(dir, "raw"),
@@ -32,7 +32,7 @@ func InitGreenfield(dir string, project string) error {
 
 	// Write config template with comments
 	cfgPath := filepath.Join(dir, "config.yaml")
-	cfgContent := configTemplate(project, fmt.Sprintf("sage-wiki project: %s", project), false)
+	cfgContent := configTemplate(project, fmt.Sprintf("sage-wiki project: %s", project), false, model)
 	if err := os.WriteFile(cfgPath, []byte(cfgContent), 0644); err != nil {
 		return fmt.Errorf("init: save config: %w", err)
 	}
@@ -69,7 +69,7 @@ func InitGreenfield(dir string, project string) error {
 }
 
 // InitVaultOverlay initializes sage-wiki on an existing Obsidian vault.
-func InitVaultOverlay(dir string, project string, sourceFolders []string, ignoreFolders []string, output string) error {
+func InitVaultOverlay(dir string, project string, sourceFolders []string, ignoreFolders []string, output string, model string) error {
 	if output == "" {
 		output = "_wiki"
 	}
@@ -101,7 +101,7 @@ func InitVaultOverlay(dir string, project string, sourceFolders []string, ignore
 		ignoreYAML += fmt.Sprintf("  - %s\n", ig)
 	}
 
-	cfgContent := configTemplateVault(project, output, sourcesYAML, ignoreYAML)
+	cfgContent := configTemplateVault(project, output, sourcesYAML, ignoreYAML, model)
 	cfgPath := filepath.Join(dir, "config.yaml")
 	if err := os.WriteFile(cfgPath, []byte(cfgContent), 0644); err != nil {
 		return fmt.Errorf("init: save config: %w", err)
@@ -172,7 +172,7 @@ func ScanFolders(dir string) ([]FolderInfo, error) {
 	return folders, nil
 }
 
-func configTemplate(project, description string, isVault bool) string {
+func configTemplate(project, description string, isVault bool, model string) string {
 	return fmt.Sprintf(`# sage-wiki configuration
 # Docs: https://github.com/xoai/sage-wiki
 
@@ -201,11 +201,11 @@ api:
 # Model selection per task
 # Use faster/cheaper models for high-volume tasks, quality models for writing
 models:
-  summarize: gemini-2.0-flash
-  extract: gemini-2.0-flash
-  write: gemini-2.0-flash
-  lint: gemini-2.0-flash
-  query: gemini-2.0-flash
+  summarize: %s
+  extract: %s
+  write: %s
+  lint: %s
+  query: %s
 
 # Embedding configuration (optional — auto-detected from api provider)
 # Override to use a different provider/model for embeddings
@@ -231,10 +231,10 @@ search:
 serve:
   transport: stdio      # stdio or sse
   port: 3333            # SSE mode only
-`, project, description)
+`, project, description, model, model, model, model, model)
 }
 
-func configTemplateVault(project, output, sourcesYAML, ignoreYAML string) string {
+func configTemplateVault(project, output, sourcesYAML, ignoreYAML, model string) string {
 	return fmt.Sprintf(`# sage-wiki configuration (vault overlay)
 # Docs: https://github.com/xoai/sage-wiki
 
@@ -263,11 +263,11 @@ api:
   # rate_limit: 60      # requests per minute
 
 models:
-  summarize: gemini-2.0-flash
-  extract: gemini-2.0-flash
-  write: gemini-2.0-flash
-  lint: gemini-2.0-flash
-  query: gemini-2.0-flash
+  summarize: %s
+  extract: %s
+  write: %s
+  lint: %s
+  query: %s
 
 # Embedding configuration (optional — auto-detected from api provider)
 embed:
@@ -287,5 +287,5 @@ search:
 
 serve:
   transport: stdio
-`, project, project, sourcesYAML, output, ignoreYAML)
+`, project, project, sourcesYAML, output, ignoreYAML, model, model, model, model, model)
 }

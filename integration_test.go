@@ -21,7 +21,7 @@ func TestIntegrationM1(t *testing.T) {
 
 	// Step 1: Initialize greenfield project
 	t.Run("init", func(t *testing.T) {
-		if err := wiki.InitGreenfield(dir, "integration-test"); err != nil {
+		if err := wiki.InitGreenfield(dir, "integration-test", "gemini-2.5-flash"); err != nil {
 			t.Fatalf("init: %v", err)
 		}
 

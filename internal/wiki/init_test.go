@@ -9,7 +9,7 @@ import (
 func TestInitGreenfield(t *testing.T) {
 	dir := t.TempDir()
 
-	if err := InitGreenfield(dir, "test-wiki"); err != nil {
+	if err := InitGreenfield(dir, "test-wiki", "gemini-2.5-flash"); err != nil {
 		t.Fatalf("InitGreenfield: %v", err)
 	}
 
@@ -72,6 +72,7 @@ func TestInitVaultOverlay(t *testing.T) {
 		[]string{"Clippings", "Papers"},
 		[]string{"Personal", "Daily Notes"},
 		"_wiki",
+		"gemini-2.5-flash",
 	)
 	if err != nil {
 		t.Fatalf("InitVaultOverlay: %v", err)
