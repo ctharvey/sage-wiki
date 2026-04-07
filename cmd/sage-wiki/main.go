@@ -17,6 +17,7 @@ import (
 	"github.com/xoai/sage-wiki/internal/memory"
 	mcppkg "github.com/xoai/sage-wiki/internal/mcp"
 	"github.com/xoai/sage-wiki/internal/prompts"
+	"github.com/xoai/sage-wiki/internal/web"
 	"github.com/xoai/sage-wiki/internal/query"
 	"github.com/xoai/sage-wiki/internal/storage"
 	"github.com/xoai/sage-wiki/internal/vectors"
@@ -120,7 +121,9 @@ func init() {
 
 	// Serve flags
 	serveCmd.Flags().String("transport", "stdio", "Transport: stdio or sse")
-	serveCmd.Flags().Int("port", 3333, "SSE port")
+	serveCmd.Flags().Int("port", 3333, "SSE/UI port")
+	serveCmd.Flags().Bool("ui", false, "Start web UI viewer")
+	serveCmd.Flags().String("bind", "127.0.0.1", "Bind address (default localhost only)")
 
 	// Lint flags
 	lintCmd.Flags().Bool("fix", false, "Auto-fix issues")
@@ -254,6 +257,28 @@ func runCompile(cmd *cobra.Command, args []string) error {
 
 func runServe(cmd *cobra.Command, args []string) error {
 	dir, _ := filepath.Abs(projectDir)
+
+	// Web UI mode
+	ui, _ := cmd.Flags().GetBool("ui")
+	if ui {
+		port, _ := cmd.Flags().GetInt("port")
+		bind, _ := cmd.Flags().GetString("bind")
+
+		if bind != "127.0.0.1" && bind != "localhost" {
+			fmt.Fprintf(os.Stderr, "⚠️  WARNING: binding to %s exposes the wiki on the network. No authentication is enabled.\n\n", bind)
+		}
+
+		webSrv, err := web.NewWebServer(dir)
+		if err != nil {
+			return err
+		}
+		defer webSrv.Close()
+
+		addr := fmt.Sprintf("%s:%d", bind, port)
+		return webSrv.Start(addr)
+	}
+
+	// MCP server mode
 	srv, err := mcppkg.NewServer(dir)
 	if err != nil {
 		return err

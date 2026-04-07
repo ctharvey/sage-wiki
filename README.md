@@ -16,7 +16,13 @@ https://github.com/user-attachments/assets/c35ee202-e9df-4ccd-b520-8f057163ff26
 ## Install
 
 ```bash
+# CLI only (no web UI)
 go install github.com/xoai/sage-wiki/cmd/sage-wiki@latest
+
+# With web UI (requires Node.js for building frontend assets)
+git clone https://github.com/xoai/sage-wiki.git && cd sage-wiki
+cd web && npm install && npm run build && cd ..
+go build -tags webui -o sage-wiki ./cmd/sage-wiki/
 ```
 
 ## Supported Source Formats
@@ -57,6 +63,8 @@ sage-wiki compile
 sage-wiki search "attention mechanism"
 # Ask questions
 sage-wiki query "How does flash attention optimize memory?"
+# Browse in the browser (requires -tags webui build)
+sage-wiki serve --ui
 # Watch folder
 sage-wiki compile --watch
 ```
@@ -80,12 +88,39 @@ sage-wiki compile --watch
 | `sage-wiki init [--vault]` | Initialize project (greenfield or vault overlay) |
 | `sage-wiki compile [--watch] [--dry-run]` | Compile sources into wiki articles |
 | `sage-wiki serve [--transport stdio\|sse]` | Start MCP server for LLM agents |
+| `sage-wiki serve --ui [--port 3333]` | Start web UI (requires `-tags webui` build) |
 | `sage-wiki lint [--fix] [--pass name]` | Run linting passes |
 | `sage-wiki search "query" [--tags ...]` | Hybrid search (BM25 + vector) |
 | `sage-wiki query "question"` | Q&A against the wiki |
 | `sage-wiki ingest <url\|path>` | Add a source |
 | `sage-wiki status` | Wiki stats and health |
 | `sage-wiki doctor` | Validate config and connectivity |
+
+## Web UI
+
+![Sage-Wiki Architecture](sage-wiki-webui.png)
+
+sage-wiki includes an optional browser-based viewer for reading and exploring your wiki.
+
+```bash
+sage-wiki serve --ui
+# Opens at http://127.0.0.1:3333
+```
+
+Features:
+- **Article browser** with rendered markdown, syntax highlighting, and clickable `[[wikilinks]]`
+- **Hybrid search** with ranked results and snippets
+- **Knowledge graph** — interactive force-directed visualization of concepts and their connections
+- **Streaming Q&A** — ask questions and get LLM-synthesized answers with source citations
+- **Table of contents** with scroll-spy, or toggle to graph view
+- **Dark/light mode** toggle with system preference detection
+- **Broken link detection** — missing article links shown in gray
+
+The web UI is built with Preact + Tailwind CSS and embedded into the Go binary via `go:embed`. It adds ~1.2 MB (gzipped) to the binary size. To build without the web UI, omit the `-tags webui` flag — the binary will still work for all CLI and MCP operations.
+
+Options:
+- `--port 3333` — change the port (default 3333)
+- `--bind 0.0.0.0` — expose on the network (default localhost only, no auth)
 
 ## Configuration
 
@@ -273,6 +308,7 @@ python3 eval.py ./test-fixture
 - **Search:** Reciprocal Rank Fusion (RRF) combining BM25 + vector + tag boost + recency decay
 - **Compiler:** 5-pass pipeline (diff, summarize, extract concepts, write articles, images)
 - **MCP:** 14 tools (5 read, 7 write, 2 compound) via stdio or SSE
+- **Web UI:** Preact + Tailwind CSS embedded via `go:embed` with build tag (`-tags webui`)
 
 Zero CGO. Pure Go. Cross-platform.
 

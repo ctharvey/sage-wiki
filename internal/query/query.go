@@ -1,6 +1,7 @@
 package query
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -63,76 +64,17 @@ func Query(projectDir string, question string, format string, topK int, opts ...
 		defer db.Close()
 	}
 
-	memStore := memory.NewStore(db)
-	vecStore := vectors.NewStore(db)
-	ontStore := ontology.NewStore(db)
-	searcher := hybrid.NewSearcher(memStore, vecStore)
-
-	// Get query embedding for hybrid search
-	embedder := embed.NewFromConfig(cfg)
-	var queryVec []float32
-	if embedder != nil {
-		queryVec, _ = embedder.Embed(question)
-	}
-
-	// Hybrid search
-	results, err := searcher.Search(hybrid.SearchOpts{
-		Query: question,
-		Limit: topK,
-	}, queryVec)
+	contextStr, sources, err := buildQueryContext(projectDir, question, topK, cfg, db)
 	if err != nil {
-		return nil, fmt.Errorf("query: search: %w", err)
+		return nil, err
 	}
 
-	if len(results) == 0 {
+	if contextStr == "" {
 		return &QueryResult{
 			Question: question,
 			Answer:   "No relevant articles found in the wiki for this question.",
 			Format:   format,
 		}, nil
-	}
-
-	// Read top-k article contents (deduplicated)
-	var context strings.Builder
-	var sources []string
-	seen := map[string]bool{}
-
-	for _, r := range results {
-		if r.ArticlePath == "" || seen[r.ArticlePath] {
-			continue
-		}
-		absPath := filepath.Join(projectDir, r.ArticlePath)
-		data, err := os.ReadFile(absPath)
-		if err != nil {
-			continue
-		}
-		seen[r.ArticlePath] = true
-		context.WriteString(fmt.Sprintf("### Source: %s\n%s\n\n---\n\n", r.ArticlePath, string(data)))
-		sources = append(sources, r.ArticlePath)
-	}
-
-	// Also check ontology for related concepts (deduplicated)
-	for _, r := range results {
-		if r.ID == "" {
-			continue
-		}
-		entityID := r.ID
-		if len(entityID) > 8 && entityID[:8] == "concept:" {
-			entityID = entityID[8:]
-		}
-		related, _ := ontStore.Traverse(entityID, ontology.TraverseOpts{
-			Direction: ontology.Both,
-			MaxDepth:  1,
-		})
-		for _, rel := range related {
-			if rel.ArticlePath != "" && !seen[rel.ArticlePath] {
-				absPath := filepath.Join(projectDir, rel.ArticlePath)
-				if data, err := os.ReadFile(absPath); err == nil {
-					seen[rel.ArticlePath] = true
-					context.WriteString(fmt.Sprintf("### Related: %s\n%s\n\n---\n\n", rel.ArticlePath, string(data)))
-				}
-			}
-		}
 	}
 
 	// Create LLM client
@@ -159,7 +101,7 @@ func Query(projectDir string, question string, format string, topK int, opts ...
 
 	resp, err := client.ChatCompletion([]llm.Message{
 		{Role: "system", Content: "You are a knowledge base Q&A assistant. Answer questions using the provided wiki articles as context. Cite sources using [[wikilinks]]. Be precise and factual."},
-		{Role: "user", Content: fmt.Sprintf("Question: %s%s\n\n## Wiki Context:\n\n%s", question, formatInstruction, context.String())},
+		{Role: "user", Content: fmt.Sprintf("Question: %s%s\n\n## Wiki Context:\n\n%s", question, formatInstruction, contextStr)},
 	}, llm.CallOpts{Model: model, MaxTokens: 4000})
 	if err != nil {
 		return nil, fmt.Errorf("query: LLM synthesis: %w", err)
@@ -173,6 +115,10 @@ func Query(projectDir string, question string, format string, topK int, opts ...
 	}
 
 	// Auto-file to outputs/
+	memStore := memory.NewStore(db)
+	vecStore := vectors.NewStore(db)
+	ontStore := ontology.NewStore(db)
+	embedder := embed.NewFromConfig(cfg)
 	outputPath, err := autoFile(projectDir, cfg.Output, result, memStore, vecStore, ontStore, embedder)
 	if err != nil {
 		log.Warn("auto-filing failed", "error", err)
@@ -181,6 +127,76 @@ func Query(projectDir string, question string, format string, topK int, opts ...
 	}
 
 	return result, nil
+}
+
+// buildQueryContext runs hybrid search + ontology traversal and assembles
+// the article context string. Returns ("", nil, nil) if no results found.
+func buildQueryContext(projectDir string, question string, topK int, cfg *config.Config, db *storage.DB) (string, []string, error) {
+	memStore := memory.NewStore(db)
+	vecStore := vectors.NewStore(db)
+	ontStore := ontology.NewStore(db)
+	searcher := hybrid.NewSearcher(memStore, vecStore)
+
+	embedder := embed.NewFromConfig(cfg)
+	var queryVec []float32
+	if embedder != nil {
+		queryVec, _ = embedder.Embed(question)
+	}
+
+	results, err := searcher.Search(hybrid.SearchOpts{
+		Query: question,
+		Limit: topK,
+	}, queryVec)
+	if err != nil {
+		return "", nil, fmt.Errorf("query: search: %w", err)
+	}
+
+	if len(results) == 0 {
+		return "", nil, nil
+	}
+
+	var ctx strings.Builder
+	var sources []string
+	seen := map[string]bool{}
+
+	for _, r := range results {
+		if r.ArticlePath == "" || seen[r.ArticlePath] {
+			continue
+		}
+		absPath := filepath.Join(projectDir, r.ArticlePath)
+		data, err := os.ReadFile(absPath)
+		if err != nil {
+			continue
+		}
+		seen[r.ArticlePath] = true
+		ctx.WriteString(fmt.Sprintf("### Source: %s\n%s\n\n---\n\n", r.ArticlePath, string(data)))
+		sources = append(sources, r.ArticlePath)
+	}
+
+	for _, r := range results {
+		if r.ID == "" {
+			continue
+		}
+		entityID := r.ID
+		if len(entityID) > 8 && entityID[:8] == "concept:" {
+			entityID = entityID[8:]
+		}
+		related, _ := ontStore.Traverse(entityID, ontology.TraverseOpts{
+			Direction: ontology.Both,
+			MaxDepth:  1,
+		})
+		for _, rel := range related {
+			if rel.ArticlePath != "" && !seen[rel.ArticlePath] {
+				absPath := filepath.Join(projectDir, rel.ArticlePath)
+				if data, err := os.ReadFile(absPath); err == nil {
+					seen[rel.ArticlePath] = true
+					ctx.WriteString(fmt.Sprintf("### Related: %s\n%s\n\n---\n\n", rel.ArticlePath, string(data)))
+				}
+			}
+		}
+	}
+
+	return ctx.String(), sources, nil
 }
 
 // autoFile saves the query result to wiki/outputs/ with frontmatter.
@@ -246,6 +262,63 @@ format: %s
 
 	log.Info("query result filed", "path", relPath)
 	return relPath, nil
+}
+
+// StreamQuery performs Q&A with streaming token output. Does not auto-file.
+// The context is used to cancel the LLM call on client disconnect.
+func StreamQuery(ctx context.Context, projectDir string, question string, topK int, tokenCB func(string), db *storage.DB) ([]string, error) {
+	if topK <= 0 {
+		topK = 5
+	}
+
+	cfg, err := config.Load(filepath.Join(projectDir, "config.yaml"))
+	if err != nil {
+		return nil, fmt.Errorf("query: load config: %w", err)
+	}
+
+	var closeDB bool
+	if db == nil {
+		db, err = storage.Open(filepath.Join(projectDir, ".sage", "wiki.db"))
+		if err != nil {
+			return nil, fmt.Errorf("query: open db: %w", err)
+		}
+		closeDB = true
+	}
+	if closeDB {
+		defer db.Close()
+	}
+
+	contextStr, sources, err := buildQueryContext(projectDir, question, topK, cfg, db)
+	if err != nil {
+		return nil, err
+	}
+
+	if contextStr == "" {
+		tokenCB("No relevant articles found in the wiki for this question.")
+		return nil, nil
+	}
+
+	client, err := llm.NewClient(cfg.API.Provider, cfg.API.APIKey, cfg.API.BaseURL, cfg.API.RateLimit)
+	if err != nil {
+		return nil, fmt.Errorf("query: create LLM client: %w", err)
+	}
+
+	model := cfg.Models.Query
+	if model == "" {
+		model = cfg.Models.Write
+	}
+
+	messages := []llm.Message{
+		{Role: "system", Content: "You are a knowledge base Q&A assistant. Answer questions using the provided wiki articles as context. Cite sources using [[wikilinks]]. Be precise and factual.\nFormat as markdown with [[wikilinks]] for cross-references."},
+		{Role: "user", Content: fmt.Sprintf("Question: %s\n\n## Wiki Context:\n\n%s", question, contextStr)},
+	}
+
+	_, err = client.ChatCompletionStream(ctx, messages, llm.CallOpts{Model: model, MaxTokens: 4000}, tokenCB)
+	if err != nil {
+		return sources, fmt.Errorf("query: LLM stream: %w", err)
+	}
+
+	return sources, nil
 }
 
 func slugify(s string) string {

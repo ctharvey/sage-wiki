@@ -22,8 +22,7 @@ func newAnthropicProvider(apiKey string, baseURL string) *anthropicProvider {
 func (p *anthropicProvider) Name() string        { return "anthropic" }
 func (p *anthropicProvider) SupportsVision() bool { return true }
 
-func (p *anthropicProvider) FormatRequest(messages []Message, opts CallOpts) (*http.Request, error) {
-	// Anthropic requires system message separate from messages
+func (p *anthropicProvider) formatBody(messages []Message, opts CallOpts, stream bool) (map[string]any, string) {
 	var systemPrompt string
 	var apiMessages []any
 
@@ -54,13 +53,16 @@ func (p *anthropicProvider) FormatRequest(messages []Message, opts CallOpts) (*h
 
 	maxTokens := opts.MaxTokens
 	if maxTokens <= 0 {
-		maxTokens = 4096 // Anthropic requires max_tokens
+		maxTokens = 4096
 	}
 
 	body := map[string]any{
 		"model":      opts.Model,
 		"messages":   apiMessages,
 		"max_tokens": maxTokens,
+	}
+	if stream {
+		body["stream"] = true
 	}
 	if systemPrompt != "" {
 		body["system"] = systemPrompt
@@ -69,16 +71,48 @@ func (p *anthropicProvider) FormatRequest(messages []Message, opts CallOpts) (*h
 		body["temperature"] = opts.Temperature
 	}
 
+	return body, systemPrompt
+}
+
+func (p *anthropicProvider) makeRequest(body map[string]any) (*http.Request, error) {
 	req, err := http.NewRequest("POST", p.baseURL+"/v1/messages", jsonBody(body))
 	if err != nil {
 		return nil, err
 	}
-
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("x-api-key", p.apiKey)
 	req.Header.Set("anthropic-version", "2023-06-01")
-
 	return req, nil
+}
+
+func (p *anthropicProvider) FormatRequest(messages []Message, opts CallOpts) (*http.Request, error) {
+	body, _ := p.formatBody(messages, opts, false)
+	return p.makeRequest(body)
+}
+
+func (p *anthropicProvider) FormatStreamRequest(messages []Message, opts CallOpts) (*http.Request, error) {
+	body, _ := p.formatBody(messages, opts, true)
+	return p.makeRequest(body)
+}
+
+func (p *anthropicProvider) ParseStreamChunk(data []byte) (string, bool) {
+	var chunk struct {
+		Type  string `json:"type"`
+		Delta struct {
+			Type string `json:"type"`
+			Text string `json:"text"`
+		} `json:"delta"`
+	}
+	if err := json.Unmarshal(data, &chunk); err != nil {
+		return "", false
+	}
+	switch chunk.Type {
+	case "content_block_delta":
+		return chunk.Delta.Text, false
+	case "message_stop":
+		return "", true
+	}
+	return "", false
 }
 
 func (p *anthropicProvider) ParseResponse(body []byte) (*Response, error) {
@@ -102,7 +136,6 @@ func (p *anthropicProvider) ParseResponse(body []byte) (*Response, error) {
 		return nil, fmt.Errorf("anthropic: empty content in response")
 	}
 
-	// Concatenate text blocks
 	var text string
 	for _, block := range result.Content {
 		if block.Type == "text" {
