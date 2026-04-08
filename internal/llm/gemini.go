@@ -5,7 +5,17 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"regexp"
+	"time"
 )
+
+// geminiKeySanitizer redacts API keys from Gemini URLs in error messages.
+var geminiKeySanitizer = regexp.MustCompile(`([?&])key=[^&\s]+`)
+
+// sanitizeGeminiError removes API key query parameters from error text.
+func sanitizeGeminiError(s string) string {
+	return geminiKeySanitizer.ReplaceAllString(s, "${1}key=REDACTED")
+}
 
 // geminiProvider implements the Google Gemini API format.
 type geminiProvider struct {
@@ -144,7 +154,7 @@ func (p *geminiProvider) SetupCache(systemPrompt string, model string) (string, 
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	client := http.Client{}
+	client := http.Client{Timeout: 120 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("gemini: cache setup request failed: %w", err)
@@ -153,7 +163,7 @@ func (p *geminiProvider) SetupCache(systemPrompt string, model string) (string, 
 
 	respBody, _ := io.ReadAll(resp.Body)
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("gemini: cache setup failed (%d): %s", resp.StatusCode, string(respBody))
+		return "", fmt.Errorf("gemini: cache setup failed (%d): %s", resp.StatusCode, sanitizeGeminiError(string(respBody)))
 	}
 
 	var result struct {
@@ -174,6 +184,8 @@ func (p *geminiProvider) FormatCachedRequest(cacheID string, messages []Message,
 
 	body, model := p.formatBody(messages, opts)
 	body["cachedContent"] = cacheID
+	// Remove systemInstruction — it's already in the cached content
+	delete(body, "systemInstruction")
 
 	url := fmt.Sprintf("%s/models/%s:generateContent?key=%s", p.baseURL, model, p.apiKey)
 
@@ -196,7 +208,7 @@ func (p *geminiProvider) TeardownCache(cacheID string) error {
 		return err
 	}
 
-	client := http.Client{}
+	client := http.Client{Timeout: 120 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
 		return fmt.Errorf("gemini: cache teardown failed: %w", err)

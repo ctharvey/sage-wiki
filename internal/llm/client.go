@@ -78,6 +78,12 @@ func (c *Client) ChatCompletion(messages []Message, opts CallOpts) (*Response, e
 	if c.cacheID != "" {
 		return c.ChatCompletionCached(c.cacheID, messages, opts)
 	}
+	return c.chatCompletionDirect(messages, opts)
+}
+
+// chatCompletionDirect sends a request without checking cacheID.
+// Used by ChatCompletion and as the fallback path for ChatCompletionCached.
+func (c *Client) chatCompletionDirect(messages []Message, opts CallOpts) (*Response, error) {
 	var lastErr error
 
 	for attempt := 0; attempt < 4; attempt++ {

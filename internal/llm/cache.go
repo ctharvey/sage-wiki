@@ -1,6 +1,7 @@
 package llm
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 
@@ -27,12 +28,12 @@ type CachingProvider interface {
 }
 
 // ChatCompletionCached sends a request using prompt caching if supported.
-// Falls back to regular ChatCompletion if the provider doesn't implement CachingProvider.
+// Falls back to chatCompletionDirect (bypasses cacheID check) to avoid infinite recursion.
 func (c *Client) ChatCompletionCached(cacheID string, messages []Message, opts CallOpts) (*Response, error) {
 	cp, ok := c.provider.(CachingProvider)
 	if !ok {
-		// Provider doesn't support caching — use regular path
-		return c.ChatCompletion(messages, opts)
+		// Provider doesn't support caching — use direct path
+		return c.chatCompletionDirect(messages, opts)
 	}
 
 	c.limiter.wait()
@@ -44,13 +45,16 @@ func (c *Client) ChatCompletionCached(cacheID string, messages []Message, opts C
 
 	resp, err := c.client.Do(req)
 	if err != nil {
-		// Fall back to regular on cache failure
+		// Fall back to direct path on cache failure
 		log.Warn("cached request failed, falling back", "error", err)
-		return c.ChatCompletion(messages, opts)
+		return c.chatCompletionDirect(messages, opts)
 	}
 
-	body, _ := readBody(resp)
+	body, err := readBody(resp)
 	resp.Body.Close()
+	if err != nil {
+		return nil, fmt.Errorf("llm: read cached response body: %w", err)
+	}
 
 	if resp.StatusCode == http.StatusOK {
 		result, err := c.provider.ParseResponse(body)
@@ -61,14 +65,14 @@ func (c *Client) ChatCompletionCached(cacheID string, messages []Message, opts C
 		return result, nil
 	}
 
-	// On error, fall back to regular path
+	// On error, fall back to direct path (no cacheID check)
 	if resp.StatusCode == 429 {
-		log.Warn("rate limited on cached request, retrying regular")
-		return c.ChatCompletion(messages, opts)
+		log.Warn("rate limited on cached request, retrying direct")
+		return c.chatCompletionDirect(messages, opts)
 	}
 
 	log.Warn("cached request error, falling back", "status", resp.StatusCode)
-	return c.ChatCompletion(messages, opts)
+	return c.chatCompletionDirect(messages, opts)
 }
 
 // SetupCache creates a cache session if the provider supports it.
