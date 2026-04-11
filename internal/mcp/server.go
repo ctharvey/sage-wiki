@@ -16,7 +16,6 @@ import (
 	"github.com/xoai/sage-wiki/internal/manifest"
 	"github.com/xoai/sage-wiki/internal/memory"
 	"github.com/xoai/sage-wiki/internal/ontology"
-	"github.com/xoai/sage-wiki/internal/prompts"
 	"github.com/xoai/sage-wiki/internal/storage"
 	"github.com/xoai/sage-wiki/internal/vectors"
 	"github.com/xoai/sage-wiki/internal/wiki"
@@ -33,6 +32,7 @@ type Server struct {
 	searcher   *hybrid.Searcher
 	embedder   embed.Embedder
 	cfg        *config.Config
+	language   string
 }
 
 // NewServer creates an MCP server with read tools registered.
@@ -41,11 +41,6 @@ func NewServer(projectDir string) (*Server, error) {
 	cfg, err := config.Load(cfgPath)
 	if err != nil {
 		return nil, fmt.Errorf("mcp: load config: %w", err)
-	}
-
-	// Configure output language if set
-	if cfg.Language != "" {
-		prompts.SetLanguage(cfg.Language)
 	}
 
 	dbPath := filepath.Join(projectDir, ".sage", "wiki.db")
@@ -69,6 +64,7 @@ func NewServer(projectDir string) (*Server, error) {
 		searcher:   searcher,
 		embedder:   embed.NewFromConfig(cfg),
 		cfg:        cfg,
+		language:   cfg.Language,
 	}
 
 	mcpServer := server.NewMCPServer(

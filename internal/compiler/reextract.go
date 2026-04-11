@@ -32,11 +32,6 @@ func ReExtract(projectDir string) (*CompileResult, error) {
 		log.Warn("failed to load custom prompts", "error", err)
 	}
 
-	// Configure output language if set
-	if cfg.Language != "" {
-		prompts.SetLanguage(cfg.Language)
-	}
-
 	mf, err := manifest.Load(filepath.Join(projectDir, ".manifest.json"))
 	if err != nil {
 		return nil, fmt.Errorf("re-extract: load manifest: %w", err)
@@ -139,6 +134,7 @@ func ReExtract(projectDir string) (*CompileResult, error) {
 			ArticleFields:    cfg.Compiler.ArticleFields,
 			RelationPatterns: relPatterns,
 			ChunkSize:        cfg.Search.ChunkSizeOrDefault(),
+			Language:         cfg.Language,
 		}, concepts)
 
 		for _, ar := range articles {
