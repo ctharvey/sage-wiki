@@ -13,6 +13,7 @@ import (
 	"github.com/xoai/sage-wiki/internal/config"
 	"github.com/xoai/sage-wiki/internal/embed"
 	"github.com/xoai/sage-wiki/internal/hybrid"
+	"github.com/xoai/sage-wiki/internal/log"
 	"github.com/xoai/sage-wiki/internal/manifest"
 	"github.com/xoai/sage-wiki/internal/memory"
 	"github.com/xoai/sage-wiki/internal/ontology"
@@ -30,8 +31,8 @@ type Server struct {
 	vec        *vectors.Store
 	ont        *ontology.Store
 	searcher   *hybrid.Searcher
-	embedder   embed.Embedder
 	cfg        *config.Config
+	embedder   embed.Embedder
 	language   string
 }
 
@@ -63,8 +64,8 @@ func NewServer(projectDir string) (*Server, error) {
 		vec:        vec,
 		ont:        ont,
 		searcher:   searcher,
-		embedder:   embed.NewFromConfig(cfg),
 		cfg:        cfg,
+		embedder:   embed.NewFromConfig(cfg),
 		language:   cfg.Language,
 	}
 
@@ -227,13 +228,15 @@ func (s *Server) handleSearch(ctx context.Context, req mcp.CallToolRequest) (*mc
 		var embedErr error
 		queryVec, embedErr = s.embedder.Embed(query)
 		if embedErr != nil {
-			fmt.Fprintf(os.Stderr, "warn: search embed failed, falling back to BM25-only: %v\n", embedErr)
+			log.Warn("search embed failed, falling back to BM25-only", "error", embedErr)
 		}
 	}
 	results, err := s.searcher.Search(hybrid.SearchOpts{
-		Query: query,
-		Tags:  tags,
-		Limit: limit,
+		Query:        query,
+		Tags:         tags,
+		Limit:        limit,
+		BM25Weight:   s.cfg.Search.HybridWeightBM25,
+		VectorWeight: s.cfg.Search.HybridWeightVector,
 	}, queryVec)
 	if err != nil {
 		return errorResult(err.Error()), nil
