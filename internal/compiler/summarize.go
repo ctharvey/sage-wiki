@@ -48,10 +48,10 @@ func Summarize(
 	var done atomic.Int32
 	var consecutiveErrors atomic.Int32
 	total := len(sources)
-	stopped := false
+	var stopped atomic.Bool
 
 	for i, src := range sources {
-		if stopped {
+		if stopped.Load() {
 			results[i] = SummaryResult{SourcePath: src.Path, Error: fmt.Errorf("skipped: circuit breaker triggered")}
 			continue
 		}
@@ -72,7 +72,7 @@ func Summarize(
 				log.Error("summarize failed", "progress", fmt.Sprintf("%d/%d", n, total), "source", info.Path, "error", result.Error)
 				if errCount >= 5 {
 					log.Error("circuit breaker: 5 consecutive failures, skipping remaining sources")
-					stopped = true
+					stopped.Store(true)
 				}
 			} else {
 				consecutiveErrors.Store(0)
