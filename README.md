@@ -15,7 +15,7 @@ Drop in your papers, articles, and notes. sage-wiki compiles them into a structu
 
 https://github.com/user-attachments/assets/c35ee202-e9df-4ccd-b520-8f057163ff26
 
-*Dots on the outer boundary represent summaries of all documents in the knowledge base, while dots in the inner circle represent concepts extracted from the knowledge base, with links showing how those concepts connect to one another.*
+_Dots on the outer boundary represent summaries of all documents in the knowledge base, while dots in the inner circle represent concepts extracted from the knowledge base, with links showing how those concepts connect to one another._
 
 ## Install
 
@@ -31,20 +31,20 @@ go build -tags webui -o sage-wiki ./cmd/sage-wiki/
 
 ## Supported Source Formats
 
-| Format | Extensions | What gets extracted |
-|--------|-----------|-------------------|
-| Markdown | `.md` | Body text with frontmatter parsed separately |
-| PDF | `.pdf` | Full text via pure-Go extraction |
-| Word | `.docx` | Document text from XML |
-| Excel | `.xlsx` | Cell values and sheet data |
-| PowerPoint | `.pptx` | Slide text content |
-| CSV | `.csv` | Headers + rows (up to 1000 rows) |
-| EPUB | `.epub` | Chapter text from XHTML |
-| Email | `.eml` | Headers (from/to/subject/date) + body |
-| Plain text | `.txt`, `.log` | Raw content |
-| Transcripts | `.vtt`, `.srt` | Raw content |
-| Images | `.png`, `.jpg`, `.gif`, `.webp`, `.svg` | Description via vision LLM (caption, content, visible text) |
-| Code | `.go`, `.py`, `.js`, `.ts`, `.rs`, etc. | Source code |
+| Format      | Extensions                              | What gets extracted                                         |
+| ----------- | --------------------------------------- | ----------------------------------------------------------- |
+| Markdown    | `.md`                                   | Body text with frontmatter parsed separately                |
+| PDF         | `.pdf`                                  | Full text via pure-Go extraction                            |
+| Word        | `.docx`                                 | Document text from XML                                      |
+| Excel       | `.xlsx`                                 | Cell values and sheet data                                  |
+| PowerPoint  | `.pptx`                                 | Slide text content                                          |
+| CSV         | `.csv`                                  | Headers + rows (up to 1000 rows)                            |
+| EPUB        | `.epub`                                 | Chapter text from XHTML                                     |
+| Email       | `.eml`                                  | Headers (from/to/subject/date) + body                       |
+| Plain text  | `.txt`, `.log`                          | Raw content                                                 |
+| Transcripts | `.vtt`, `.srt`                          | Raw content                                                 |
+| Images      | `.png`, `.jpg`, `.gif`, `.webp`, `.svg` | Description via vision LLM (caption, content, visible text) |
+| Code        | `.go`, `.py`, `.js`, `.ts`, `.rs`, etc. | Source code                                                 |
 
 Just drop files into your source folder — sage-wiki detects the format automatically. Images require a vision-capable LLM (Gemini, Claude, GPT-4o).
 
@@ -110,20 +110,20 @@ See the [self-hosting guide](docs/guides/self-hosted-server.md) for Docker Compo
 
 ## Commands
 
-| Command | Description |
-|---------|------------|
-| `sage-wiki init [--vault]` | Initialize project (greenfield or vault overlay) |
-| `sage-wiki compile [--watch] [--dry-run] [--batch] [--estimate] [--no-cache] [--prune]` | Compile sources into wiki articles |
-| `sage-wiki serve [--transport stdio\|sse]` | Start MCP server for LLM agents |
-| `sage-wiki serve --ui [--port 3333]` | Start web UI (requires `-tags webui` build) |
-| `sage-wiki lint [--fix] [--pass name]` | Run linting passes |
-| `sage-wiki search "query" [--tags ...]` | Hybrid search (BM25 + vector) |
-| `sage-wiki query "question"` | Q&A against the wiki |
-| `sage-wiki tui` | Launch interactive terminal dashboard |
-| `sage-wiki ingest <url\|path>` | Add a source |
-| `sage-wiki status` | Wiki stats and health |
-| `sage-wiki provenance <source-or-concept>` | Show source↔article provenance mappings |
-| `sage-wiki doctor` | Validate config and connectivity |
+| Command                                                                                 | Description                                      |
+| --------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| `sage-wiki init [--vault]`                                                              | Initialize project (greenfield or vault overlay) |
+| `sage-wiki compile [--watch] [--dry-run] [--batch] [--estimate] [--no-cache] [--prune]` | Compile sources into wiki articles               |
+| `sage-wiki serve [--transport stdio\|sse]`                                              | Start MCP server for LLM agents                  |
+| `sage-wiki serve --ui [--port 3333]`                                                    | Start web UI (requires `-tags webui` build)      |
+| `sage-wiki lint [--fix] [--pass name]`                                                  | Run linting passes                               |
+| `sage-wiki search "query" [--tags ...]`                                                 | Hybrid search (BM25 + vector)                    |
+| `sage-wiki query "question"`                                                            | Q&A against the wiki                             |
+| `sage-wiki tui`                                                                         | Launch interactive terminal dashboard            |
+| `sage-wiki ingest <url\|path>`                                                          | Add a source                                     |
+| `sage-wiki status`                                                                      | Wiki stats and health                            |
+| `sage-wiki provenance <source-or-concept>`                                              | Show source↔article provenance mappings          |
+| `sage-wiki doctor`                                                                      | Validate config and connectivity                 |
 
 ## TUI
 
@@ -152,6 +152,7 @@ sage-wiki serve --ui
 ```
 
 Features:
+
 - **Article browser** with rendered markdown, syntax highlighting, and clickable `[[wikilinks]]`
 - **Hybrid search** with ranked results and snippets
 - **Knowledge graph** — interactive force-directed visualization of concepts and their connections
@@ -163,6 +164,7 @@ Features:
 The web UI is built with Preact + Tailwind CSS and embedded into the Go binary via `go:embed`. It adds ~1.2 MB (gzipped) to the binary size. To build without the web UI, omit the `-tags webui` flag — the binary will still work for all CLI and MCP operations.
 
 Options:
+
 - `--port 3333` — change the port (default 3333)
 - `--bind 0.0.0.0` — expose on the network (default localhost only, no auth)
 
@@ -177,11 +179,11 @@ description: "Personal research wiki"
 
 # Source folders to watch and compile
 sources:
-  - path: raw               # or vault folders like Clippings/, Papers/
-    type: auto               # auto-detect from file extension
+  - path: raw # or vault folders like Clippings/, Papers/
+    type: auto # auto-detect from file extension
     watch: true
 
-output: wiki                 # compiled output directory (_wiki for vault overlay)
+output: wiki # compiled output directory (_wiki for vault overlay)
 
 # Folders to never read or send to APIs (vault overlay mode)
 # ignore:
@@ -195,7 +197,7 @@ output: wiki                 # compiled output directory (_wiki for vault overla
 #   base_url: https://openrouter.ai/api/v1
 api:
   provider: gemini
-  api_key: ${GEMINI_API_KEY}    # env var expansion supported
+  api_key: ${GEMINI_API_KEY} # env var expansion supported
   # base_url:                   # custom endpoint (OpenRouter, Azure, etc.)
   # rate_limit: 60              # requests per minute
 
@@ -210,18 +212,18 @@ models:
 # Embedding provider (optional — auto-detected from api provider)
 # Override to use a different provider for embeddings
 embed:
-  provider: auto              # auto, openai, gemini, ollama, voyage, mistral
+  provider: auto # auto, openai, gemini, ollama, voyage, mistral
   # model: text-embedding-3-small
   # api_key: ${OPENAI_API_KEY}  # separate key for embeddings
   # base_url:                   # separate endpoint
 
 compiler:
-  max_parallel: 4             # concurrent LLM calls
-  debounce_seconds: 2         # watch mode debounce
+  max_parallel: 4 # concurrent LLM calls
+  debounce_seconds: 2 # watch mode debounce
   summary_max_tokens: 2000
   article_max_tokens: 4000
-  auto_commit: true           # git commit after compile
-  auto_lint: true             # run lint after compile
+  auto_commit: true # git commit after compile
+  auto_lint: true # run lint after compile
   # mode: standard            # standard, batch, or auto
   # estimate_before: false    # prompt with cost estimate before compiling
   # prompt_cache: true        # enable prompt caching (default: true)
@@ -233,7 +235,7 @@ compiler:
   #   - domain
 
 search:
-  hybrid_weight_bm25: 0.7    # BM25 vs vector weight
+  hybrid_weight_bm25: 0.7 # BM25 vs vector weight
   hybrid_weight_vector: 0.3
   default_limit: 10
   # query_expansion: true     # LLM query expansion for Q&A (default: true)
@@ -249,17 +251,21 @@ search:
   # weight_type_affinity: 1.0  # graph signal: entity type pair bonus
 
 serve:
-  transport: stdio            # stdio or sse
-  port: 3333                  # SSE mode only
+  transport: stdio # stdio or sse
+  port: 3333 # SSE mode only
 
-# Ontology relation types (optional)
-# Extend built-in types with additional synonyms or add custom relation types.
+
+# Ontology types (optional)
+# Extend built-in types with additional synonyms or add custom types.
 # ontology:
-#   relations:
+#   relation_types:
 #     - name: implements           # extend built-in with more synonyms
 #       synonyms: ["thực hiện", "triển khai"]
 #     - name: regulates            # add a custom relation type
 #       synonyms: ["regulates", "regulated by", "调控"]
+#   entity_types:
+#     - name: decision
+#       description: "A recorded decision with rationale"
 ```
 
 ### Configurable Relations
@@ -307,13 +313,13 @@ sage-wiki uses an enhanced search pipeline for Q&A queries, inspired by analyzin
 - **Graph-enhanced context expansion** — After retrieval, a 4-signal graph scorer finds related articles via the ontology: direct relations (×3.0), shared source documents (×4.0), common neighbors via Adamic-Adar (×1.5), and entity type affinity (×1.0). This surfaces articles that are structurally related but missed by keyword/vector search.
 - **Token budget control** — Query context is capped at a configurable token limit (default 8000), with articles truncated at 4000 tokens each. Greedy filling prioritizes the highest-scored articles.
 
-| | sage-wiki | qmd |
-|---|---|---|
-| Chunk search | FTS5 + vector (dual-channel) | Vector-only |
-| Query expansion | LLM-based (lex/vec/hyde) | LLM-based |
-| Re-ranking | LLM + position-aware blending | Cross-encoder |
-| Graph context | 4-signal graph expansion + 1-hop traversal | No graph |
-| Cost per query | Free (Ollama) / ~$0.0006 (cloud) | Free (local GGUF) |
+|                 | sage-wiki                                  | qmd               |
+| --------------- | ------------------------------------------ | ----------------- |
+| Chunk search    | FTS5 + vector (dual-channel)               | Vector-only       |
+| Query expansion | LLM-based (lex/vec/hyde)                   | LLM-based         |
+| Re-ranking      | LLM + position-aware blending              | Cross-encoder     |
+| Graph context   | 4-signal graph expansion + 1-hop traversal | No graph          |
+| Cost per query  | Free (Ollama) / ~$0.0006 (cloud)           | Free (local GGUF) |
 
 Zero config = all features enabled. With Ollama or other local models, enhanced search is completely free — re-ranking is auto-disabled (local models struggle with structured JSON scoring) but chunk-level search and query expansion still work. With cloud LLMs, the additional cost is negligible (~$0.0006/query). Both expansion and re-ranking can be toggled via config. See the [full search quality guide](docs/guides/search-quality.md) for configuration, cost breakdown, and detailed comparison.
 
@@ -425,29 +431,29 @@ Run `python3 eval.py .` on your own project to reproduce. See [eval.py](eval.py)
 
 ### Performance
 
-| Operation | p50 | Throughput |
-|---|--:|--:|
-| FTS5 keyword search (top-10) | 411µs | 1,775 qps |
-| Vector cosine search (2,858 × 3072d) | 81ms | 15 qps |
-| Hybrid RRF (BM25 + vector) | 80ms | 16 qps |
-| Graph traversal (BFS depth ≤ 5) | 1µs | 738K qps |
-| Cycle detection (full graph) | 1.4ms | — |
-| FTS insert (batch 100) | — | 89,802 /s |
-| Sustained mixed reads | 77µs | 8,500+ ops/s |
+| Operation                            |   p50 |   Throughput |
+| ------------------------------------ | ----: | -----------: |
+| FTS5 keyword search (top-10)         | 411µs |    1,775 qps |
+| Vector cosine search (2,858 × 3072d) |  81ms |       15 qps |
+| Hybrid RRF (BM25 + vector)           |  80ms |       16 qps |
+| Graph traversal (BFS depth ≤ 5)      |   1µs |     738K qps |
+| Cycle detection (full graph)         | 1.4ms |            — |
+| FTS insert (batch 100)               |     — |    89,802 /s |
+| Sustained mixed reads                |  77µs | 8,500+ ops/s |
 
 Non-LLM compile overhead (hashing + dependency analysis) is under 1 second. The compiler's wall time is dominated entirely by LLM API calls.
 
 ### Quality
 
-| Metric | Score |
-|---|--:|
-| Search recall@10 | **100%** |
-| Search recall@1 | 91.6% |
-| Source citation rate | 94.6% |
-| Alias coverage | 90.0% |
-| Fact extraction rate | 68.5% |
-| Wiki connectivity | 60.5% |
-| Cross-reference integrity | 50.0% |
+| Metric                    |     Score |
+| ------------------------- | --------: |
+| Search recall@10          |  **100%** |
+| Search recall@1           |     91.6% |
+| Source citation rate      |     94.6% |
+| Alias coverage            |     90.0% |
+| Fact extraction rate      |     68.5% |
+| Wiki connectivity         |     60.5% |
+| Cross-reference integrity |     50.0% |
 | **Overall quality score** | **73.0%** |
 
 ### Running the eval

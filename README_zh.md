@@ -15,7 +15,7 @@
 
 https://github.com/user-attachments/assets/c35ee202-e9df-4ccd-b520-8f057163ff26
 
-*外圈的点代表知识库中所有文档的摘要,内圈的点代表从知识库中提取的概念,连线展示了这些概念之间的关联。*
+_外圈的点代表知识库中所有文档的摘要,内圈的点代表从知识库中提取的概念,连线展示了这些概念之间的关联。_
 
 ## 安装
 
@@ -31,20 +31,20 @@ go build -tags webui -o sage-wiki ./cmd/sage-wiki/
 
 ## 支持的源文件格式
 
-| 格式 | 扩展名 | 提取内容 |
-|------|--------|---------|
-| Markdown | `.md` | 正文,frontmatter 单独解析 |
-| PDF | `.pdf` | 纯 Go 提取全文 |
-| Word | `.docx` | XML 中的文档文本 |
-| Excel | `.xlsx` | 单元格值和工作表数据 |
-| PowerPoint | `.pptx` | 幻灯片文本内容 |
-| CSV | `.csv` | 表头 + 行数据 (最多 1000 行) |
-| EPUB | `.epub` | XHTML 中的章节文本 |
-| 邮件 | `.eml` | 邮件头 (发件人/收件人/主题/日期) + 正文 |
-| 纯文本 | `.txt`, `.log` | 原始内容 |
-| 字幕 | `.vtt`, `.srt` | 原始内容 |
-| 图片 | `.png`, `.jpg`, `.gif`, `.webp`, `.svg` | 通过 vision LLM 生成描述 (标题、内容、可见文字) |
-| 代码 | `.go`, `.py`, `.js`, `.ts`, `.rs` 等 | 源代码 |
+| 格式       | 扩展名                                  | 提取内容                                        |
+| ---------- | --------------------------------------- | ----------------------------------------------- |
+| Markdown   | `.md`                                   | 正文,frontmatter 单独解析                       |
+| PDF        | `.pdf`                                  | 纯 Go 提取全文                                  |
+| Word       | `.docx`                                 | XML 中的文档文本                                |
+| Excel      | `.xlsx`                                 | 单元格值和工作表数据                            |
+| PowerPoint | `.pptx`                                 | 幻灯片文本内容                                  |
+| CSV        | `.csv`                                  | 表头 + 行数据 (最多 1000 行)                    |
+| EPUB       | `.epub`                                 | XHTML 中的章节文本                              |
+| 邮件       | `.eml`                                  | 邮件头 (发件人/收件人/主题/日期) + 正文         |
+| 纯文本     | `.txt`, `.log`                          | 原始内容                                        |
+| 字幕       | `.vtt`, `.srt`                          | 原始内容                                        |
+| 图片       | `.png`, `.jpg`, `.gif`, `.webp`, `.svg` | 通过 vision LLM 生成描述 (标题、内容、可见文字) |
+| 代码       | `.go`, `.py`, `.js`, `.ts`, `.rs` 等    | 源代码                                          |
 
 只需将文件放入源文件夹 -- sage-wiki 会自动检测格式。图片需要支持 vision 的 LLM (Gemini、Claude、GPT-4o)。
 
@@ -110,20 +110,20 @@ docker run -d -p 3333:3333 -v ./my-wiki:/wiki -e GEMINI_API_KEY=... sage-wiki
 
 ## 命令
 
-| 命令 | 说明 |
-|------|------|
-| `sage-wiki init [--vault]` | 初始化项目 (全新或 vault 覆盖模式) |
-| `sage-wiki compile [--watch] [--dry-run] [--batch] [--estimate] [--no-cache] [--prune]` | 将源文件编译为 wiki 文章 |
-| `sage-wiki serve [--transport stdio\|sse]` | 启动 MCP 服务器供 LLM Agent 使用 |
-| `sage-wiki serve --ui [--port 3333]` | 启动 Web UI (需要 `-tags webui` 构建) |
-| `sage-wiki lint [--fix] [--pass name]` | 运行 lint 检查 |
-| `sage-wiki search "query" [--tags ...]` | 混合搜索 (BM25 + 向量) |
-| `sage-wiki query "question"` | 对 wiki 进行问答 |
-| `sage-wiki tui` | 启动交互式终端面板 |
-| `sage-wiki ingest <url\|path>` | 添加源文件 |
-| `sage-wiki status` | 查看 wiki 统计和健康状态 |
-| `sage-wiki provenance <source-or-concept>` | 查看源文件与文章的溯源映射 |
-| `sage-wiki doctor` | 验证配置和连接性 |
+| 命令                                                                                    | 说明                                  |
+| --------------------------------------------------------------------------------------- | ------------------------------------- |
+| `sage-wiki init [--vault]`                                                              | 初始化项目 (全新或 vault 覆盖模式)    |
+| `sage-wiki compile [--watch] [--dry-run] [--batch] [--estimate] [--no-cache] [--prune]` | 将源文件编译为 wiki 文章              |
+| `sage-wiki serve [--transport stdio\|sse]`                                              | 启动 MCP 服务器供 LLM Agent 使用      |
+| `sage-wiki serve --ui [--port 3333]`                                                    | 启动 Web UI (需要 `-tags webui` 构建) |
+| `sage-wiki lint [--fix] [--pass name]`                                                  | 运行 lint 检查                        |
+| `sage-wiki search "query" [--tags ...]`                                                 | 混合搜索 (BM25 + 向量)                |
+| `sage-wiki query "question"`                                                            | 对 wiki 进行问答                      |
+| `sage-wiki tui`                                                                         | 启动交互式终端面板                    |
+| `sage-wiki ingest <url\|path>`                                                          | 添加源文件                            |
+| `sage-wiki status`                                                                      | 查看 wiki 统计和健康状态              |
+| `sage-wiki provenance <source-or-concept>`                                              | 查看源文件与文章的溯源映射            |
+| `sage-wiki doctor`                                                                      | 验证配置和连接性                      |
 
 ## TUI
 
@@ -152,6 +152,7 @@ sage-wiki serve --ui
 ```
 
 功能:
+
 - **文章浏览器**: 渲染 markdown,语法高亮,可点击的 `[[wikilinks]]`
 - **混合搜索**: 排序结果和摘要片段
 - **知识图谱**: 交互式力导向图,可视化概念及其关联
@@ -163,6 +164,7 @@ sage-wiki serve --ui
 Web UI 使用 Preact + Tailwind CSS 构建,通过 `go:embed` 嵌入 Go 二进制文件。压缩后增加约 1.2 MB 体积。构建时省略 `-tags webui` 标志即可不包含 Web UI -- 二进制文件仍支持所有 CLI 和 MCP 操作。
 
 选项:
+
 - `--port 3333` -- 修改端口 (默认 3333)
 - `--bind 0.0.0.0` -- 暴露到网络 (默认仅 localhost,无认证)
 
@@ -177,11 +179,11 @@ description: "Personal research wiki"
 
 # 要监听和编译的源文件夹
 sources:
-  - path: raw               # 或 vault 文件夹如 Clippings/, Papers/
-    type: auto               # 根据文件扩展名自动检测
+  - path: raw # 或 vault 文件夹如 Clippings/, Papers/
+    type: auto # 根据文件扩展名自动检测
     watch: true
 
-output: wiki                 # 编译输出目录 (vault 覆盖模式下为 _wiki)
+output: wiki # 编译输出目录 (vault 覆盖模式下为 _wiki)
 
 # 不读取也不发送给 API 的文件夹 (vault 覆盖模式)
 # ignore:
@@ -195,7 +197,7 @@ output: wiki                 # 编译输出目录 (vault 覆盖模式下为 _wik
 #   base_url: https://openrouter.ai/api/v1
 api:
   provider: gemini
-  api_key: ${GEMINI_API_KEY}    # 支持环境变量展开
+  api_key: ${GEMINI_API_KEY} # 支持环境变量展开
   # base_url:                   # 自定义端点 (OpenRouter, Azure 等)
   # rate_limit: 60              # 每分钟请求数
 
@@ -210,18 +212,18 @@ models:
 # Embedding 提供商 (可选 -- 自动从 api 提供商检测)
 # 可覆盖为不同的 embedding 提供商
 embed:
-  provider: auto              # auto, openai, gemini, ollama, voyage, mistral
+  provider: auto # auto, openai, gemini, ollama, voyage, mistral
   # model: text-embedding-3-small
   # api_key: ${OPENAI_API_KEY}  # 单独的 embedding API Key
   # base_url:                   # 单独的端点
 
 compiler:
-  max_parallel: 4             # 并发 LLM 调用数
-  debounce_seconds: 2         # watch 模式防抖
+  max_parallel: 4 # 并发 LLM 调用数
+  debounce_seconds: 2 # watch 模式防抖
   summary_max_tokens: 2000
   article_max_tokens: 4000
-  auto_commit: true           # 编译后自动 git commit
-  auto_lint: true             # 编译后自动 lint
+  auto_commit: true # 编译后自动 git commit
+  auto_lint: true # 编译后自动 lint
   # mode: standard            # standard, batch 或 auto
   # estimate_before: false    # 编译前显示费用估算
   # prompt_cache: true        # 启用 prompt 缓存 (默认: true)
@@ -233,7 +235,7 @@ compiler:
   #   - domain
 
 search:
-  hybrid_weight_bm25: 0.7    # BM25 与向量搜索的权重
+  hybrid_weight_bm25: 0.7 # BM25 与向量搜索的权重
   hybrid_weight_vector: 0.3
   default_limit: 10
   # query_expansion: true     # LLM 查询扩展 (默认: true)
@@ -249,17 +251,21 @@ search:
   # weight_type_affinity: 1.0  # 图信号: 实体类型对加成
 
 serve:
-  transport: stdio            # stdio 或 sse
-  port: 3333                  # 仅 SSE 模式
+  transport: stdio # stdio 或 sse
+  port: 3333 # 仅 SSE 模式
 
-# 本体关系类型 (可选)
-# 扩展内置类型的同义词或添加自定义关系类型。
+
+# 本体类型 (可选)
+# 扩展内置类型的同义词或添加自定义类型。
 # ontology:
-#   relations:
+#   relation_types:
 #     - name: implements           # 为内置类型添加更多同义词
 #       synonyms: ["thuc hien", "trien khai"]
 #     - name: regulates            # 添加自定义关系类型
 #       synonyms: ["regulates", "regulated by", "调控"]
+#   entity_types:
+#     - name: decision
+#       description: "决策记录及其理由"
 ```
 
 ### 可配置的关系类型
@@ -307,12 +313,12 @@ sage-wiki 使用增强搜索管线处理问答查询,灵感来自对 [qmd](https
 - **图增强上下文扩展** -- 检索后,4 信号图评分器通过本体发现相关文章: 直接关系 (x3.0)、共享源文档 (x4.0)、Adamic-Adar 共同邻居 (x1.5) 和实体类型亲和度 (x1.0)。这能找到结构上相关但被关键词/向量搜索遗漏的文章。
 - **Token 预算控制** -- 查询上下文限制在可配置的 token 上限内 (默认 8000),每篇文章截断至 4000 token。贪心填充优先选择评分最高的文章。
 
-| | sage-wiki | qmd |
-|---|---|---|
-| Chunk 搜索 | FTS5 + 向量 (双通道) | 仅向量 |
-| 查询扩展 | 基于 LLM (词法/向量/HyDE) | 基于 LLM |
-| 重排序 | LLM + 位置感知融合 | Cross-encoder |
-| 图上下文 | 4 信号图扩展 + 1 跳遍历 | 无图 |
+|              | sage-wiki                         | qmd              |
+| ------------ | --------------------------------- | ---------------- |
+| Chunk 搜索   | FTS5 + 向量 (双通道)              | 仅向量           |
+| 查询扩展     | 基于 LLM (词法/向量/HyDE)         | 基于 LLM         |
+| 重排序       | LLM + 位置感知融合                | Cross-encoder    |
+| 图上下文     | 4 信号图扩展 + 1 跳遍历           | 无图             |
 | 单次查询费用 | 免费 (Ollama) / 约 $0.0006 (云端) | 免费 (本地 GGUF) |
 
 零配置 = 所有功能默认启用。使用 Ollama 或其他本地模型时,增强搜索完全免费 -- 重排序会自动禁用 (本地模型难以处理结构化 JSON 评分),但 chunk 级别搜索和查询扩展仍然有效。使用云端 LLM 时,额外费用可忽略 (约 $0.0006/次查询)。扩展和重排序均可通过配置开关。参阅[完整搜索质量指南](docs/guides/search-quality.md)了解配置、费用明细和详细对比。
@@ -425,29 +431,29 @@ sage-wiki 作为 MCP 服务器运行,因此你可以直接从 AI 对话中捕获
 
 ### 性能
 
-| 操作 | p50 | 吞吐量 |
-|------|----:|-------:|
-| FTS5 关键词搜索 (top-10) | 411us | 1,775 qps |
-| 向量余弦搜索 (2,858 x 3072d) | 81ms | 15 qps |
-| 混合 RRF (BM25 + 向量) | 80ms | 16 qps |
-| 图遍历 (BFS 深度 <= 5) | 1us | 738K qps |
-| 环检测 (全图) | 1.4ms | -- |
-| FTS 插入 (批量 100) | -- | 89,802 /s |
-| 持续混合读取 | 77us | 8,500+ ops/s |
+| 操作                         |   p50 |       吞吐量 |
+| ---------------------------- | ----: | -----------: |
+| FTS5 关键词搜索 (top-10)     | 411us |    1,775 qps |
+| 向量余弦搜索 (2,858 x 3072d) |  81ms |       15 qps |
+| 混合 RRF (BM25 + 向量)       |  80ms |       16 qps |
+| 图遍历 (BFS 深度 <= 5)       |   1us |     738K qps |
+| 环检测 (全图)                | 1.4ms |           -- |
+| FTS 插入 (批量 100)          |    -- |    89,802 /s |
+| 持续混合读取                 |  77us | 8,500+ ops/s |
 
 非 LLM 编译开销 (哈希 + 依赖分析) 低于 1 秒。编译器的实际耗时完全由 LLM API 调用决定。
 
 ### 质量
 
-| 指标 | 分数 |
-|------|-----:|
-| 搜索召回率@10 | **100%** |
-| 搜索召回率@1 | 91.6% |
-| 源引用率 | 94.6% |
-| 别名覆盖率 | 90.0% |
-| 事实提取率 | 68.5% |
-| Wiki 连通性 | 60.5% |
-| 交叉引用完整性 | 50.0% |
+| 指标             |      分数 |
+| ---------------- | --------: |
+| 搜索召回率@10    |  **100%** |
+| 搜索召回率@1     |     91.6% |
+| 源引用率         |     94.6% |
+| 别名覆盖率       |     90.0% |
+| 事实提取率       |     68.5% |
+| Wiki 连通性      |     60.5% |
+| 交叉引用完整性   |     50.0% |
 | **综合质量分数** | **73.0%** |
 
 ### 运行评估

@@ -244,7 +244,7 @@ serve:
 # Built-in entity types: concept, technique, source, claim, artifact
 #
 # ontology:
-#   relations:
+#   relation_types:
 #     - name: implements
 #       synonyms: ["thực hiện", "triển khai"]   # add Vietnamese synonyms
 #     - name: regulates
@@ -313,7 +313,7 @@ serve:
 
 # Ontology types (optional)
 # ontology:
-#   relations:
+#   relation_types:
 #     - name: implements
 #       synonyms: ["thực hiện", "triển khai"]
 #     - name: regulates

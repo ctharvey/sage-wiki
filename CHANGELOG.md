@@ -17,7 +17,7 @@
 
 ### Cascade Awareness
 
-- **Orphan detection on source removal** — When a source is removed during compile, affected concepts are identified *before* the manifest entry is deleted. Single-source concepts are flagged as orphaned with a log warning. Multi-source concepts get their sources list updated.
+- **Orphan detection on source removal** — When a source is removed during compile, affected concepts are identified _before_ the manifest entry is deleted. Single-source concepts are flagged as orphaned with a log warning. Multi-source concepts get their sources list updated.
 - **`--prune` flag** — Opt-in destructive cleanup: `sage-wiki compile --prune` deletes orphaned article files, removes FTS5/vector/ontology entries, and cleans up the manifest. Warn-only by default.
 
 ### Ontology Helpers
@@ -30,17 +30,25 @@
 
 ```yaml
 search:
-  graph_expansion: true        # enable graph-based context expansion (default: true)
-  graph_max_expand: 10         # max articles added via graph
-  graph_depth: 2               # ontology traversal depth
-  context_max_tokens: 8000     # token budget for query context
-  weight_direct_link: 3.0      # graph signal weights
+  graph_expansion: true # enable graph-based context expansion (default: true)
+  graph_max_expand: 10 # max articles added via graph
+  graph_depth: 2 # ontology traversal depth
+  context_max_tokens: 8000 # token budget for query context
+  weight_direct_link: 3.0 # graph signal weights
   weight_source_overlap: 4.0
   weight_common_neighbor: 1.5
   weight_type_affinity: 1.0
 ```
 
 All fields optional with sensible defaults. `graph_expansion` uses `*bool` pattern (like `query_expansion`, `rerank`) — nil defaults to true. Existing configs work unchanged.
+
+---
+
+## Unreleased
+
+### Config Key Rename
+
+- **`ontology.relation_types`** replaces `ontology.relations` as the preferred config key, for consistency with `ontology.entity_types`. The old `relations` key is still accepted with a deprecation warning. If both keys are present, `relation_types` takes precedence.
 
 ---
 
@@ -66,9 +74,9 @@ All fields optional with sensible defaults. `graph_expansion` uses `*bool` patte
 ontology:
   relations:
     - name: implements
-      synonyms: ["thực hiện", "triển khai"]   # extend built-in with multilingual synonyms
+      synonyms: ["thực hiện", "triển khai"] # extend built-in with multilingual synonyms
     - name: regulates
-      synonyms: ["regulates", "regulated by"]  # add a custom relation type
+      synonyms: ["regulates", "regulated by"] # add a custom relation type
 ```
 
 ### Fixes
@@ -89,14 +97,14 @@ ontology:
 
 ### Binaries
 
-| Platform | Binary |
-|----------|--------|
-| Linux amd64 | `sage-wiki-linux-amd64` |
-| Linux arm64 | `sage-wiki-linux-arm64` |
-| macOS amd64 (Intel) | `sage-wiki-darwin-amd64` |
-| macOS arm64 (Apple Silicon) | `sage-wiki-darwin-arm64` |
-| Windows amd64 | `sage-wiki-windows-amd64.exe` |
-| Windows arm64 | `sage-wiki-windows-arm64.exe` |
+| Platform                    | Binary                        |
+| --------------------------- | ----------------------------- |
+| Linux amd64                 | `sage-wiki-linux-amd64`       |
+| Linux arm64                 | `sage-wiki-linux-arm64`       |
+| macOS amd64 (Intel)         | `sage-wiki-darwin-amd64`      |
+| macOS arm64 (Apple Silicon) | `sage-wiki-darwin-arm64`      |
+| Windows amd64               | `sage-wiki-windows-amd64.exe` |
+| Windows arm64               | `sage-wiki-windows-arm64.exe` |
 
 ### Docker
 
@@ -133,11 +141,11 @@ docker pull xoai/sage-wiki:v0.1.2
 
 ```yaml
 compiler:
-  mode: standard          # standard, batch, or auto
-  estimate_before: false  # prompt before compiling
-  prompt_cache: true      # enable prompt caching (default: true)
-  batch_threshold: 10     # min sources for auto-batch
-  token_price_per_million: 0  # override pricing (0 = use built-in)
+  mode: standard # standard, batch, or auto
+  estimate_before: false # prompt before compiling
+  prompt_cache: true # enable prompt caching (default: true)
+  batch_threshold: 10 # min sources for auto-batch
+  token_price_per_million: 0 # override pricing (0 = use built-in)
 ```
 
 ### New CLI Flags
@@ -222,11 +230,11 @@ First public release of sage-wiki, an LLM-compiled personal knowledge base.
 
 ### Binaries
 
-| Platform | Binary |
-|----------|--------|
-| Linux amd64 | `sage-wiki-linux-amd64` |
-| Linux arm64 | `sage-wiki-linux-arm64` |
-| macOS amd64 (Intel) | `sage-wiki-darwin-amd64` |
-| macOS arm64 (Apple Silicon) | `sage-wiki-darwin-arm64` |
-| Windows amd64 | `sage-wiki-windows-amd64.exe` |
-| Windows arm64 | `sage-wiki-windows-arm64.exe` |
+| Platform                    | Binary                        |
+| --------------------------- | ----------------------------- |
+| Linux amd64                 | `sage-wiki-linux-amd64`       |
+| Linux arm64                 | `sage-wiki-linux-arm64`       |
+| macOS amd64 (Intel)         | `sage-wiki-darwin-amd64`      |
+| macOS arm64 (Apple Silicon) | `sage-wiki-darwin-arm64`      |
+| Windows amd64               | `sage-wiki-windows-amd64.exe` |
+| Windows arm64               | `sage-wiki-windows-arm64.exe` |

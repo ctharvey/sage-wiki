@@ -198,8 +198,12 @@ func TestValidation(t *testing.T) {
 			wantErr: "invalid name",
 		},
 		{
-			name: "valid relation names",
+			name: "valid relation names via relations key",
 			cfg:  Config{Project: "test", Output: "wiki", Sources: []Source{{Path: "raw"}}, Ontology: OntologyConfig{Relations: []RelationConfig{{Name: "regulates", Synonyms: []string{"regulates"}}, {Name: "implements"}}}},
+		},
+		{
+			name: "valid relation names via relation_types key",
+			cfg:  Config{Project: "test", Output: "wiki", Sources: []Source{{Path: "raw"}}, Ontology: OntologyConfig{RelationTypes: []RelationConfig{{Name: "regulates"}, {Name: "implements"}}}},
 		},
 		{
 			name:    "invalid entity type name uppercase",
@@ -242,6 +246,28 @@ func TestValidation(t *testing.T) {
 				t.Errorf("expected error containing %q, got %q", tt.wantErr, err.Error())
 			}
 		})
+	}
+}
+
+func TestRelationTypesMergePrecedence(t *testing.T) {
+	cfg := Config{
+		Project: "test",
+		Output:  "wiki",
+		Sources: []Source{{Path: "raw"}},
+		Ontology: OntologyConfig{
+			Relations:     []RelationConfig{{Name: "old_key"}},
+			RelationTypes: []RelationConfig{{Name: "new_key"}},
+		},
+	}
+	if err := cfg.Validate(); err != nil {
+		t.Fatal(err)
+	}
+	// relation_types should take precedence
+	if len(cfg.Ontology.Relations) != 1 || cfg.Ontology.Relations[0].Name != "new_key" {
+		t.Errorf("expected relation_types to override relations, got %v", cfg.Ontology.Relations)
+	}
+	if len(cfg.Ontology.RelationTypes) != 0 {
+		t.Error("expected RelationTypes to be normalized to nil after merge")
 	}
 }
 

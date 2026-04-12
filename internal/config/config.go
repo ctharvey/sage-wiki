@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -207,8 +208,9 @@ type ServeConfig struct {
 
 // OntologyConfig configures ontology relation and entity types.
 type OntologyConfig struct {
-	Relations   []RelationConfig   `yaml:"relations,omitempty"`
-	EntityTypes []EntityTypeConfig `yaml:"entity_types,omitempty"`
+	Relations     []RelationConfig   `yaml:"relations,omitempty"`
+	RelationTypes []RelationConfig   `yaml:"relation_types,omitempty"` // preferred key; "relations" accepted for backwards compat
+	EntityTypes   []EntityTypeConfig `yaml:"entity_types,omitempty"`
 }
 
 // RelationConfig defines a custom or extended relation type.
@@ -342,12 +344,20 @@ func (c *Config) Validate() error {
 			return fmt.Errorf("config: invalid compiler.mode %q (valid: standard, batch, auto)", c.Compiler.Mode)
 		}
 	}
+	// Merge relation_types (preferred) and relations (deprecated) keys.
+	// If both are set, relation_types takes precedence.
+	if len(c.Ontology.RelationTypes) > 0 {
+		c.Ontology.Relations = c.Ontology.RelationTypes
+		c.Ontology.RelationTypes = nil // normalize to single field
+	} else if len(c.Ontology.Relations) > 0 {
+		log.Println("config: ontology.relations is deprecated, use ontology.relation_types instead")
+	}
 	for _, r := range c.Ontology.Relations {
 		if r.Name == "" {
-			return fmt.Errorf("config: ontology.relations: name is required")
+			return fmt.Errorf("config: ontology.relation_types: name is required")
 		}
 		if !typeNameRe.MatchString(r.Name) {
-			return fmt.Errorf("config: ontology.relations: invalid name %q (must match [a-z][a-z0-9_]*)", r.Name)
+			return fmt.Errorf("config: ontology.relation_types: invalid name %q (must match [a-z][a-z0-9_]*)", r.Name)
 		}
 	}
 	for _, et := range c.Ontology.EntityTypes {
