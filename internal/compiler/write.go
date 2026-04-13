@@ -23,6 +23,10 @@ import (
 	"github.com/xoai/sage-wiki/internal/vectors"
 )
 
+// postWriteArticleHook is called after each article is written.
+// Set by fork_hooks.go via init() — nil if not set.
+var postWriteArticleHook func(db *storage.DB, conceptID, content string)
+
 // ArticleResult holds the output of writing a concept article.
 type ArticleResult struct {
 	ConceptName string
@@ -271,6 +275,9 @@ func writeOneArticle(opts ArticleWriteOpts, concept ExtractedConcept) ArticleRes
 		}
 	}
 
+	if postWriteArticleHook != nil {
+		postWriteArticleHook(opts.DB, concept.Name, articleContent)
+	}
 	return result
 }
 

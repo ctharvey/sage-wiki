@@ -148,8 +148,9 @@ func TestRunnerAllPasses(t *testing.T) {
 	}
 
 	// Should have results for all passes (even if empty)
-	if len(results) != 7 {
-		t.Errorf("expected 7 pass results, got %d", len(results))
+	// Fork adds 2 passes (ProvenancePass + ClaimsContradictionPass) via init() in fork_passes.go
+	if len(results) != 9 {
+		t.Errorf("expected 9 pass results, got %d", len(results))
 	}
 }
 

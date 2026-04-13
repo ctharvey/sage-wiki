@@ -79,6 +79,7 @@ func NewServer(projectDir string) (*Server, error) {
 	s.registerReadTools()
 	s.registerWriteTools()
 	s.registerCompoundTools()
+	s.registerForkTools()
 
 	return s, nil
 }

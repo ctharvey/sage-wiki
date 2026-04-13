@@ -57,19 +57,27 @@ type Runner struct {
 	passes []LintPass
 }
 
+// registeredPasses holds additional passes registered via RegisterPass.
+var registeredPasses []LintPass
+
+// RegisterPass adds a lint pass to the global registry. Call from init() in fork files.
+func RegisterPass(p LintPass) {
+	registeredPasses = append(registeredPasses, p)
+}
+
 // NewRunner creates a runner with all registered passes.
 func NewRunner() *Runner {
-	return &Runner{
-		passes: []LintPass{
-			&CompletenessPass{},
-			&StylePass{},
-			&OrphansPass{},
-			&ConsistencyPass{},
-			&ConnectionsPass{},
-			&ImputePass{},
-			&StalenessPass{},
-		},
+	passes := []LintPass{
+		&CompletenessPass{},
+		&StylePass{},
+		&OrphansPass{},
+		&ConsistencyPass{},
+		&ConnectionsPass{},
+		&ImputePass{},
+		&StalenessPass{},
 	}
+	passes = append(passes, registeredPasses...)
+	return &Runner{passes: passes}
 }
 
 // EnsureDB opens the DB if not already provided in context.

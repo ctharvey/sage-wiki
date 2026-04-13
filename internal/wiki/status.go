@@ -27,6 +27,8 @@ type StatusInfo struct {
 	EntityCount   int    `json:"entity_count"`
 	RelationCount int    `json:"relation_count"`
 	LearningCount int    `json:"learning_count"`
+	ReferenceCount int  `json:"reference_count"`
+	WikiCount      int  `json:"wiki_count"`
 	EmbedProvider string `json:"embed_provider"`
 	EmbedDims     int    `json:"embed_dims"`
 	DimMismatch   bool   `json:"dim_mismatch"`
@@ -41,6 +43,9 @@ type Stores struct {
 	Vec *vectors.Store
 	Ont *ontology.Store
 }
+
+// postGetStatusShapeHook is set by status_fork.go to populate ReferenceCount/WikiCount.
+var postGetStatusShapeHook func(projectDir string, info *StatusInfo)
 
 // GetStatus collects wiki stats from the project.
 // If stores is non-nil, uses the provided stores (avoids double DB open).
@@ -124,6 +129,10 @@ func GetStatus(projectDir string, stores *Stores) (*StatusInfo, error) {
 		info.LastMessage = msg
 	}
 
+	if postGetStatusShapeHook != nil {
+		postGetStatusShapeHook(projectDir, info)
+	}
+
 	return info, nil
 }
 
@@ -132,6 +141,7 @@ func FormatStatus(s *StatusInfo) string {
 	out := fmt.Sprintf("Project: %s (%s)\n", s.Project, s.Mode)
 	out += fmt.Sprintf("Sources: %d (%d pending)\n", s.SourceCount, s.PendingCount)
 	out += fmt.Sprintf("Concepts: %d\n", s.ConceptCount)
+	out += fmt.Sprintf("Wiki: %d\nReference: %d\n", s.WikiCount, s.ReferenceCount)
 	out += fmt.Sprintf("Entries: %d indexed\n", s.EntryCount)
 	out += fmt.Sprintf("Vectors: %d", s.VectorCount)
 	if s.VectorDims > 0 {
@@ -145,7 +155,7 @@ func FormatStatus(s *StatusInfo) string {
 	}
 	out += "\n"
 	if s.DimMismatch {
-		out += fmt.Sprintf("  WARNING: dimension mismatch (stored: %d-dim, provider: %d-dim) — re-embed on next compile\n", s.VectorDims, s.EmbedDims)
+		out += fmt.Sprintf(" WARNING: dimension mismatch (stored: %d-dim, provider: %d-dim) — re-embed on next compile\n", s.VectorDims, s.EmbedDims)
 	}
 
 	if s.LastCommit != "" {

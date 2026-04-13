@@ -34,7 +34,8 @@ type QueryResult struct {
 
 // QueryOpts allows callers to pass shared resources.
 type QueryOpts struct {
-	DB *storage.DB // optional — opened from project dir if nil
+	DB    *storage.DB // optional — opened from project dir if nil
+	Shape string      // fork: filter by document_shape frontmatter; empty = no filter
 }
 
 // Query performs a Q&A operation: search → read articles → LLM synthesis.
